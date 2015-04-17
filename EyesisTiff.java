@@ -4,12 +4,12 @@
 **
 ** Writes Tiff files suitable for Emblend, preserve ImageJ Info data
 ** Uses bioformat library
-** 
+**
 **
 ** Copyright (C) 2012 Elphel, Inc.
 **
 ** -----------------------------------------------------------------------------**
-**  
+**
 **  EyesisTiff.java is free software: you can redistribute it and/or modify
 **  it under the terms of the GNU General Public License as published by
 **  the Free Software Foundation, either version 3 of the License, or
@@ -53,8 +53,8 @@ import loci.formats.tiff.TiffCompression;
 
 
 public class EyesisTiff {
-//	private static org.apache.log4j.Logger log= Logger.getLogger(EyesisTiff.class); 
-	
+//	private static org.apache.log4j.Logger log= Logger.getLogger(EyesisTiff.class);
+
 private String codec="UNCOMPRESSED";
 
 public EyesisTiff(){
@@ -77,14 +77,16 @@ public EyesisTiff(String codec){
 			int debugLevel
 	) throws IOException, FormatException, ServiceException, DependencyException{
 		if (imp.getType()==ImagePlus.COLOR_RGB) {
-			if (debugLevel>1) System.out.println("Saving 8-bit TIFF with alpha-channel: "+path);
-			saveTiffARGB32(imp, path, imageJTags, debugLevel);
+			System.out.println("Saving 8-bit TIFF with alpha-channel: "+path+"...");
+			saveTiffARGB32(imp, path, imageJTags, 0);
+			System.out.println("Done saving "+path);
 			return;
 		} else if (imp.getStackSize()==4) {
-			if (debugLevel>1) System.out.println("Saving 32-bit float TIFF with alpha-channel: "+path);
-			saveTiffARGB(imp, path, mode, scale, imageJTags,debugLevel);
+			System.out.println("Saving 32-bit float TIFF with alpha-channel: "+path+"...");
+			saveTiffARGB(imp, path, mode, scale, imageJTags,0);
+			System.out.println("Done saving "+path);
 			return;
-			
+
 		}
 		IJ.showMessage("Not yet implemented for this image type");
 	}
@@ -102,8 +104,8 @@ public EyesisTiff(String codec){
 
 		int IFDImageJByteCounts= 0xc696; // was array {12( if no slices, roi, etc.), bytes in info}
 		int IFDImageJInfo=       0xc697; // ImageJ info, starting with magic IJIJinfo,
-		byte [] ImageJInfoMagic={73,74,73,74,105,110,102,111,0,0,0,1}; 
-		
+		byte [] ImageJInfoMagic={73,74,73,74,105,110,102,111,0,0,0,1};
+
 		int pixelsDenominator=1000;
 		String description=(imp.getProperty("description")!=null)?((String) imp.getProperty("description")):"Elphel Eyesis4pi";
 //		int [] iPixels= (int []) imp.getProcessor().getPixels();
@@ -176,7 +178,7 @@ public EyesisTiff(String codec){
         default:
 			IJ.error("saveTiffARGBFloat32", "Unsupported output format mode ="+mode);
 			return;
-        } 
+        }
 //        System.out.println("saveTiffARGBFloat32(): mode="+mode+" pixelType="+pixelType+" bw="+bw);
         IFD ifd=new IFD();
         ifd.put(new Integer(IFD.LITTLE_ENDIAN), new Boolean(false));
@@ -184,7 +186,7 @@ public EyesisTiff(String codec){
         ifd.put(new Integer(IFD.IMAGE_WIDTH), imp.getWidth());
         ifd.put(new Integer(IFD.IMAGE_LENGTH), imp.getHeight());
         ifd.put(new Integer(IFD.SAMPLES_PER_PIXEL), 4);
-        ifd.putIFDValue(IFD.SOFTWARE, "Elphel Eyesis"); 
+        ifd.putIFDValue(IFD.SOFTWARE, "Elphel Eyesis");
         ifd.putIFDValue(IFD.IMAGE_DESCRIPTION, description);
         // copy some other data?
         ifd.putIFDValue(IFD.COMPRESSION, TiffCompression.valueOf(codec).getCode());
@@ -206,7 +208,7 @@ public EyesisTiff(String codec){
         if (imp.getProperty("ImageFullLength")!=null){
         	ifd.putIFDValue(IFDImageFullLength, (long) Integer.parseInt((String) imp.getProperty("ImageFullLength")));
         }
-//TODO: Seems to match ImageJ Info, but it is not recognized :-(  
+//TODO: Seems to match ImageJ Info, but it is not recognized :-(
         if (imageJTags && (imp.getProperty("Info")!=null) && (imp.getProperty("Info") instanceof String)){
         	int skipFirstBytes=2;
         	String info=(String) imp.getProperty("Info");
@@ -218,14 +220,14 @@ public EyesisTiff(String codec){
         	long [] imageJcounts={12, bInfoBody.length-skipFirstBytes};
         	ifd.putIFDValue(IFDImageJByteCounts, imageJcounts);
         	ifd.putIFDValue(IFDImageJInfo, bInfo);
-        	
+
         }
         (new File(path)).delete(); // Otherwise TiffSaver appends!
         TiffSaver tiffSaver = new TiffSaver(path);
         tiffSaver.setWritingSequentially(true);
         tiffSaver.setLittleEndian(false);
         tiffSaver.setCodecOptions(TiffCompression.valueOf(codec).getCompressionCodecOptions(ifd));
-        tiffSaver.writeHeader(); 
+        tiffSaver.writeHeader();
 //        tiffSaver.writeIFD(ifd,0); //* SHould not write here, some fields are calculated during writeImage, that writes IFD too
 //        System.out.println("bytes.length="+bytes.length);
         tiffSaver.writeImage(bytes,
@@ -248,8 +250,8 @@ public EyesisTiff(String codec){
 
 		int IFDImageJByteCounts= 0xc696; // was array {12( if no slices, roi, etc.), bytes in info}
 		int IFDImageJInfo=       0xc697; // ImageJ info, starting with magic IJIJinfo,
-		byte [] ImageJInfoMagic={73,74,73,74,105,110,102,111,0,0,0,1}; 
-		
+		byte [] ImageJInfoMagic={73,74,73,74,105,110,102,111,0,0,0,1};
+
 		int pixelsDenominator=1000;
 		String description=(imp.getProperty("description")!=null)?((String) imp.getProperty("description")):"Elphel Eyesis4pi";
 		int [] iPixels= (int []) imp.getProcessor().getPixels();
@@ -267,7 +269,7 @@ public EyesisTiff(String codec){
         ifd.put(new Integer(IFD.IMAGE_WIDTH), imp.getWidth());
         ifd.put(new Integer(IFD.IMAGE_LENGTH), imp.getHeight());
         ifd.put(new Integer(IFD.SAMPLES_PER_PIXEL), 4);
-        ifd.putIFDValue(IFD.SOFTWARE, "Elphel Eyesis"); 
+        ifd.putIFDValue(IFD.SOFTWARE, "Elphel Eyesis");
         ifd.putIFDValue(IFD.IMAGE_DESCRIPTION, description);
         // copy some other data?
         ifd.putIFDValue(IFD.COMPRESSION, TiffCompression.valueOf(codec).getCode());
@@ -290,7 +292,7 @@ public EyesisTiff(String codec){
         if (imp.getProperty("ImageFullLength")!=null){
         	ifd.putIFDValue(IFDImageFullLength, (long) Integer.parseInt((String) imp.getProperty("ImageFullLength")));
         }
-//TODO: Seems to match ImageJ Info, but it is not recognized :-(  
+//TODO: Seems to match ImageJ Info, but it is not recognized :-(
         if (imageJTags &&  (imp.getProperty("Info")!=null) && (imp.getProperty("Info") instanceof String)){
         	int skipFirstBytes=2;
         	String info=(String) imp.getProperty("Info");
@@ -299,7 +301,7 @@ public EyesisTiff(String codec){
         	int index=0;
         	for (int i=0;i<ImageJInfoMagic.length;i++) bInfo[index++]=ImageJInfoMagic[i];
         	for (int i=skipFirstBytes;i<bInfoBody.length;      i++) bInfo[index++]=bInfoBody[i]; // first 2 bytes {-2, -1} ???
-/*        	
+/*
         	StringBuffer sb=new StringBuffer("bInfo: ");
         	for (int i=0;i<bInfo.length;i++) sb.append(bInfo[i]+" ");
         	System.out.println(sb.toString());
@@ -316,13 +318,13 @@ public EyesisTiff(String codec){
         	long [] imageJcounts={12, bInfoBody.length-skipFirstBytes};
         	ifd.putIFDValue(IFDImageJByteCounts, imageJcounts);
         	ifd.putIFDValue(IFDImageJInfo, bInfo);
-        	
+
         }
         (new File(path)).delete(); // Otherwise TiffSaver appends!
         TiffSaver tiffSaver = new TiffSaver(path);
         tiffSaver.setWritingSequentially(true);
         tiffSaver.setLittleEndian(false);
-        tiffSaver.writeHeader(); 
+        tiffSaver.writeHeader();
 //        tiffSaver.writeIFD(ifd,0); //* SHould not write here, some fields are calculated during writeImage, that writes IFD too
         System.out.println("bytes.length="+bytes.length);
         tiffSaver.writeImage(bytes,
@@ -331,10 +333,10 @@ public EyesisTiff(String codec){
         		0, //int pixelType:INT8, INT16, INT32, UINT8, UINT16, UINT32, FLOAT, BIT, DOUBLE, COMPLEX, DOUBLECOMPLEX; - used to find bpp
         		true); // boolean last)
 	}
-	
-	
-	
-	
+
+
+
+
 	public void propertiesTiff(ImagePlus imp){
 		FileInfo fi = imp.getOriginalFileInfo();
 		if ((fi==null) ||(fi.directory==null) ||  (fi.fileFormat!=FileInfo.TIFF)) {
@@ -353,11 +355,11 @@ public EyesisTiff(String codec){
 		if (log!=null) log.toFront();
 
 	}
-	
+
 	 public static void dumpIFDs(String path) throws IOException {
 		   IJ.showStatus("Parsing IFDs");
 		   RandomAccessInputStream in = new RandomAccessInputStream(path);
-		  
+
 		   //TiffParser parser = new TiffParser(in);
 		   TiffParser parser = new TiffParser(in);
 		   IFDList ifdList = parser.getIFDs();
@@ -390,7 +392,7 @@ public EyesisTiff(String codec){
 		   sb.append(spaces);
 		   sb.append("}");
 		   byte [] bstring=new byte [Array.getLength(value)];
-		   
+
 		   for (int i=0;i<bstring.length;i++) bstring[i]= (byte) Integer.parseInt(Array.get(value, i).toString());
 		//   String astring=new String((byte []) value);
 		   String astring="";
