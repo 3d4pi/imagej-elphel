@@ -32,6 +32,10 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+
 //import org.apache.log4j.Logger;
 
 
@@ -223,6 +227,11 @@ public EyesisTiff(String codec){
 
         }
         (new File(path)).delete(); // Otherwise TiffSaver appends!
+
+		// Disable logger
+		Logger TiffSaverLogger = (Logger)LoggerFactory.getLogger(TiffSaver.class);
+		TiffSaverLogger.setLevel(Level.INFO);
+
         TiffSaver tiffSaver = new TiffSaver(path);
         tiffSaver.setWritingSequentially(true);
         tiffSaver.setLittleEndian(false);
@@ -321,6 +330,11 @@ public EyesisTiff(String codec){
 
         }
         (new File(path)).delete(); // Otherwise TiffSaver appends!
+
+		// Disable logger
+		Logger TiffSaverLogger = (Logger)LoggerFactory.getLogger(TiffSaver.class);
+		TiffSaverLogger.setLevel(Level.INFO);
+
         TiffSaver tiffSaver = new TiffSaver(path);
         tiffSaver.setWritingSequentially(true);
         tiffSaver.setLittleEndian(false);
