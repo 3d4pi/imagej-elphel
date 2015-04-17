@@ -230,7 +230,7 @@ public EyesisTiff(String codec){
 
 		// Disable logger
 		Logger TiffSaverLogger = (Logger)LoggerFactory.getLogger(TiffSaver.class);
-		TiffSaverLogger.setLevel(Level.INFO);
+		TiffSaverLogger.setLevel(Level.OFF);
 
         TiffSaver tiffSaver = new TiffSaver(path);
         tiffSaver.setWritingSequentially(true);
@@ -333,7 +333,7 @@ public EyesisTiff(String codec){
 
 		// Disable logger
 		Logger TiffSaverLogger = (Logger)LoggerFactory.getLogger(TiffSaver.class);
-		TiffSaverLogger.setLevel(Level.INFO);
+		TiffSaverLogger.setLevel(Level.OFF);
 
         TiffSaver tiffSaver = new TiffSaver(path);
         tiffSaver.setWritingSequentially(true);
