@@ -156,5 +156,4 @@ Shape {
  <TextureCoordinate point="-37.500000 4.000000 -46.450000 .../>
  </IndexedFaceSet>
  
- */
 */
