@@ -63,6 +63,7 @@ public class EyesisCorrectionParameters {
   		
   		public String tiffCompression =        "UNCOMPRESSED"; // tiff compression codec
   		public boolean jpeg =                  true;  // convert to RGB and save JPEG (if save is true)
+  		public boolean png =                   true;  // use PNG instead of TIFF for 32-bit ARGB
   		public boolean save =                  true;
   		public boolean save16 =                false; // save 16-bit tiff also if the end result is 8 bit 
   		public boolean save32 =                false; // save 32-bit tiff also if the end result is 8 or 16 bit
@@ -81,12 +82,17 @@ public class EyesisCorrectionParameters {
     	public String sensorDirectory="";
     	public String sensorPrefix="sensor-";
     	public String sensorSuffix=".calib-tiff"; // fixed in PixelMapping
+    	
     	public String sharpKernelDirectory="";
     	public String sharpKernelPrefix="sharpKernel-";
     	public String sharpKernelSuffix=".kernel-tiff";
     	public String smoothKernelDirectory="";
     	public String smoothKernelPrefix="smoothKernel-";
     	public String smoothKernelSuffix=".kernel-tiff";
+    	public String dctKernelDirectory="";
+    	public String dctKernelPrefix="dct-";
+    	public String dctSymSuffix=".sym-tiff";
+    	public String dctAsymSuffix=".asym-tiff";
     	public String equirectangularDirectory="";
     	public String equirectangularPrefix="";
     	public String equirectangularSuffix=".eqr-tiff";
@@ -97,11 +103,16 @@ public class EyesisCorrectionParameters {
     	public boolean planeAsJPEG=       true;   // save de-warped image as JPEG (only if equirectangularFormat==0)
 //    	public String equirectangularSuffixA="A.eqr-tiff"; // or the roll-over part
     	public String resultsDirectory="";
-    	public boolean removeUnusedSensorData=true;
+    	public boolean removeUnusedSensorData=false;
     	public int exposureCorrectionMode=2; // - 0 - none, 1 - absolute, 2 - relative
     	public double referenceExposure=0.0003; // 3/10000 sec, used in absolute mode only
     	public double relativeExposure=0.5; // 0.0 - use shortest (darken), 1.0 - use longest (brighten)
     	
+    	public String cltKernelDirectory="";
+    	public String cltKernelPrefix="clt-";
+    	public String cltSuffix=".clt-tiff";
+
+    	public String x3dDirectory="";   	
     	
     	public void setProperties(String prefix,Properties properties){
   			properties.setProperty(prefix+"split",this.split+"");
@@ -129,6 +140,7 @@ public class EyesisCorrectionParameters {
   			properties.setProperty(prefix+"outputRangeFP",this.outputRangeFP+"");
   			properties.setProperty(prefix+"imageJTags",this.imageJTags+"");
   			properties.setProperty(prefix+"jpeg",this.jpeg+"");
+  			properties.setProperty(prefix+"png",this.png+"");
   			properties.setProperty(prefix+"save",this.save+"");
   			properties.setProperty(prefix+"save16",this.save16+"");
   			properties.setProperty(prefix+"save32",this.save32+"");
@@ -147,12 +159,20 @@ public class EyesisCorrectionParameters {
     		properties.setProperty(prefix+"sensorDirectory",this.sensorDirectory);
     		properties.setProperty(prefix+"sensorPrefix",this.sensorPrefix);
     		properties.setProperty(prefix+"sensorSuffix",this.sensorSuffix);
+    		
+    		
     		properties.setProperty(prefix+"sharpKernelDirectory",this.sharpKernelDirectory);
     		properties.setProperty(prefix+"sharpKernelPrefix",this.sharpKernelPrefix);
     		properties.setProperty(prefix+"sharpKernelSuffix",this.sharpKernelSuffix);
     		properties.setProperty(prefix+"smoothKernelDirectory",this.smoothKernelDirectory);
     		properties.setProperty(prefix+"smoothKernelPrefix",this.smoothKernelPrefix);
     		properties.setProperty(prefix+"smoothKernelSuffix",this.smoothKernelSuffix);
+    		
+    		properties.setProperty(prefix+"dctKernelDirectory",this.dctKernelDirectory);
+    		properties.setProperty(prefix+"dctKernelPrefix",this.dctKernelPrefix);
+    		properties.setProperty(prefix+"dctSymSuffix",this.dctSymSuffix);
+    		properties.setProperty(prefix+"dctAsymSuffix",this.dctAsymSuffix);
+
     		properties.setProperty(prefix+"equirectangularDirectory",this.equirectangularDirectory);
     		properties.setProperty(prefix+"equirectangularPrefix",this.equirectangularPrefix);
     		properties.setProperty(prefix+"equirectangularSuffix",this.equirectangularSuffix);
@@ -174,8 +194,14 @@ public class EyesisCorrectionParameters {
     		properties.setProperty(prefix+"exposureCorrectionMode",this.exposureCorrectionMode+"");
     		properties.setProperty(prefix+"referenceExposure",     this.referenceExposure+"");
     		properties.setProperty(prefix+"relativeExposure",      this.relativeExposure+"");
-    		properties.setProperty(prefix+"swapSubchannels01",      this.swapSubchannels01+"");
+    		properties.setProperty(prefix+"swapSubchannels01",     this.swapSubchannels01+"");
     		
+    		properties.setProperty(prefix+"cltKernelDirectory",    this.cltKernelDirectory);
+    		properties.setProperty(prefix+"cltKernelPrefix",       this.cltKernelPrefix);
+    		properties.setProperty(prefix+"cltSuffix",             this.cltSuffix);
+
+    		properties.setProperty(prefix+"x3dDirectory",          this.x3dDirectory);
+
     	}
 
     	public void getProperties(String prefix,Properties properties){
@@ -205,6 +231,7 @@ public class EyesisCorrectionParameters {
   		    if (properties.getProperty(prefix+"tiffCompression")!=null) this.tiffCompression=properties.getProperty(prefix+"tiffCompression");
   		    if (properties.getProperty(prefix+"imageJTags")!=null) this.imageJTags=Boolean.parseBoolean(properties.getProperty(prefix+"imageJTags"));
   		    if (properties.getProperty(prefix+"jpeg")!=null) this.jpeg=Boolean.parseBoolean(properties.getProperty(prefix+"jpeg"));   // convert to RGB and save jpeg (if save is true)
+  		    if (properties.getProperty(prefix+"png")!=null) this.png=Boolean.parseBoolean(properties.getProperty(prefix+"png"));   // convert to RGB and save jpeg (if save is true)
   		    if (properties.getProperty(prefix+"save")!=null) this.save=Boolean.parseBoolean(properties.getProperty(prefix+"save"));
   		    if (properties.getProperty(prefix+"save16")!=null) this.save16=Boolean.parseBoolean(properties.getProperty(prefix+"save16")); // save 16-bit tiff also if the end result is 8 bit 
   		    if (properties.getProperty(prefix+"save32")!=null) this.save32=Boolean.parseBoolean(properties.getProperty(prefix+"save32")); // save 32-bit tiff also if the end result is 8 or 16 bit
@@ -221,6 +248,7 @@ public class EyesisCorrectionParameters {
 			if (properties.getProperty(prefix+"sensorDirectory")!=      null) this.sensorDirectory=properties.getProperty(prefix+"sensorDirectory");
 			if (properties.getProperty(prefix+"sensorPrefix")!=         null) this.sensorPrefix=properties.getProperty(prefix+"sensorPrefix");
 			if (properties.getProperty(prefix+"sensorSuffix")!=         null) this.sensorSuffix=properties.getProperty(prefix+"sensorSuffix");
+			
 			if (properties.getProperty(prefix+"sharpKernelDirectory")!= null) this.sharpKernelDirectory=properties.getProperty(prefix+"sharpKernelDirectory");
 			if (properties.getProperty(prefix+"sharpKernelPrefix")!=    null) this.sharpKernelPrefix=properties.getProperty(prefix+"sharpKernelPrefix");
 			if (properties.getProperty(prefix+"sharpKernelSuffix")!=    null) this.sharpKernelSuffix=properties.getProperty(prefix+"sharpKernelSuffix");
@@ -228,6 +256,11 @@ public class EyesisCorrectionParameters {
 			if (properties.getProperty(prefix+"smoothKernelPrefix")!=   null) this.smoothKernelPrefix=properties.getProperty(prefix+"smoothKernelPrefix");
 			if (properties.getProperty(prefix+"smoothKernelSuffix")!=   null) this.smoothKernelSuffix=properties.getProperty(prefix+"smoothKernelSuffix");
 
+			if (properties.getProperty(prefix+"dctKernelDirectory")!=   null) this.dctKernelDirectory=properties.getProperty(prefix+"dctKernelDirectory");
+			if (properties.getProperty(prefix+"dctKernelPrefix")!=      null) this.dctKernelPrefix=properties.getProperty(prefix+"dctKernelPrefix");
+			if (properties.getProperty(prefix+"dctSymSuffix")!=         null) this.dctSymSuffix=properties.getProperty(prefix+"dctSymSuffix");
+			if (properties.getProperty(prefix+"dctAsymSuffix")!=        null) this.dctAsymSuffix=properties.getProperty(prefix+"dctAsymSuffix");
+			
 			if (properties.getProperty(prefix+"equirectangularDirectory")!=null) this.equirectangularDirectory=properties.getProperty(prefix+"equirectangularDirectory");
 			if (properties.getProperty(prefix+"equirectangularPrefix")!=null) this.equirectangularPrefix=properties.getProperty(prefix+"equirectangularPrefix");
 			if (properties.getProperty(prefix+"equirectangularSuffix")!=null) this.equirectangularSuffix=properties.getProperty(prefix+"equirectangularSuffix");
@@ -256,6 +289,13 @@ public class EyesisCorrectionParameters {
   		    if (properties.getProperty(prefix+"referenceExposure")     !=null) this.referenceExposure=   Double.parseDouble(properties.getProperty(prefix+"referenceExposure"));
   		    if (properties.getProperty(prefix+"relativeExposure")      !=null) this.relativeExposure=    Double.parseDouble(properties.getProperty(prefix+"relativeExposure"));
   		    if (properties.getProperty(prefix+"swapSubchannels01")!=null) this.swapSubchannels01=Boolean.parseBoolean(properties.getProperty(prefix+"swapSubchannels01"));
+  		    
+			if (properties.getProperty(prefix+"cltKernelDirectory")!=   null) this.cltKernelDirectory=properties.getProperty(prefix+"cltKernelDirectory");
+			if (properties.getProperty(prefix+"cltKernelPrefix")!=      null) this.cltKernelPrefix=properties.getProperty(prefix+"cltKernelPrefix");
+			if (properties.getProperty(prefix+"cltSuffix")!=            null) this.cltSuffix=properties.getProperty(prefix+"cltSuffix");
+  		    
+			if (properties.getProperty(prefix+"x3dDirectory")!=         null) this.x3dDirectory=properties.getProperty(prefix+"x3dDirectory");
+  		    
     	}
 
     	public boolean showDialog(String title) { 
@@ -302,38 +342,56 @@ public class EyesisCorrectionParameters {
    		
 			gd.addCheckbox ("Convert to RGB48",                                 this.toRGB);
     		gd.addCheckbox ("Convert to 8 bit RGB (and save JPEG if save is enabled)", this.jpeg);
+    		gd.addCheckbox ("Use PNG instead of TIFF for 32 bit (8 per color) RGBA", this.png);
     		gd.addCheckbox ("Save the result to file system",                   this.save);
     		gd.addCheckbox ("Save 16-bit tiff if the result is 8 bit",          this.save16);
-    		gd.addCheckbox ("Save 32-bit tiff if the result is 8 or 16 bit",    this.save32);
-    		gd.addCheckbox ("Show the result image",                            this.show);
-    		gd.addNumericField("JPEG quality (%)",                              this.JPEG_quality,0);
-    		gd.addNumericField("JPEG scale   (%)",                         100* this.JPEG_scale,0);
-    		gd.addCheckbox ("Warp results to equirectangular",                  this.equirectangular);
-    		gd.addCheckbox ("Calculate distances in overlapping areas",         this.zcorrect);
-    		gd.addCheckbox ("Save current settings with results",               this.saveSettings);
+    		gd.addCheckbox    ("Save 32-bit tiff if the result is 8 or 16 bit",    this.save32);
+    		gd.addCheckbox    ("Show the result image",                            this.show);
+    		gd.addNumericField("JPEG quality (%)",                                 this.JPEG_quality,0);
+    		gd.addNumericField("JPEG scale   (%)",                            100* this.JPEG_scale,0);
+    		gd.addCheckbox    ("Warp results to equirectangular",                  this.equirectangular);
+    		gd.addCheckbox    ("Calculate distances in overlapping areas",         this.zcorrect);
+    		gd.addCheckbox    ("Save current settings with results",               this.saveSettings);
+    		gd.addStringField ("Source files directory",                           this.sourceDirectory, 60);
+    		gd.addCheckbox    ("Select source directory",                          false);
+    		gd.addStringField ("Sensor calibration directory",                     this.sensorDirectory, 60);
+    		gd.addCheckbox    ("Select sensor calibration directory",              false);
 
-    		gd.addStringField("Source files directory", this.sourceDirectory, 60);
-    		gd.addCheckbox("Select source directory", false);
-    		gd.addStringField("Sensor calibration directory", this.sensorDirectory, 60);
-    		gd.addCheckbox("Select sensor calibration directory", false);
-    		gd.addStringField("Aberration kernels (sharp) directory", this.sharpKernelDirectory, 60);
-    		gd.addCheckbox("Select aberration kernels (sharp) directory", false);
-    		gd.addStringField("Aberration kernels (smooth) directory", this.smoothKernelDirectory, 60);
-    		gd.addCheckbox("Select aberration kernels (smooth) directory", false);
-    		gd.addStringField("Equirectangular maps directory (may be empty)", this.equirectangularDirectory, 60);
-    		gd.addCheckbox("Select equirectangular maps directory", false);
-    		gd.addStringField("Results directory",               this.resultsDirectory, 40);
-    		gd.addCheckbox("Select results directory",           false);
-    		gd.addStringField("Source files prefix",             this.sourcePrefix, 40);
-    		gd.addStringField("Source files suffix",             this.sourceSuffix, 40);
-    		gd.addNumericField("First subcamera (in the source filename)", this.firstSubCamera, 0);
+    		gd.addStringField ("Aberration kernels (sharp) directory",             this.sharpKernelDirectory, 60);
+    		gd.addCheckbox    ("Select aberration kernels (sharp) directory",      false);
+    		gd.addStringField ("Aberration kernels (smooth) directory",            this.smoothKernelDirectory, 60);
+    		gd.addCheckbox    ("Select aberration kernels (smooth) directory",     false);
     		
-    		gd.addStringField("Sensor files prefix",             this.sensorPrefix, 40);
-    		gd.addStringField("Sensor files suffix",             this.sensorSuffix, 40);
-    		gd.addStringField("Kernel files (sharp) prefix",     this.sharpKernelPrefix, 40);
-    		gd.addStringField("Kernel files (sharp) suffix",     this.sharpKernelSuffix, 40);
-    		gd.addStringField("Kernel files (smooth) prefix",    this.smoothKernelPrefix, 40);
-    		gd.addStringField("Kernel files (smooth) suffix",    this.smoothKernelSuffix, 40);
+    		gd.addStringField ("Aberration kernels for DCT directory",             this.dctKernelDirectory, 60);
+    		gd.addCheckbox    ("Select aberration kernels for DCT directory",      false);
+
+    		gd.addStringField ("Aberration kernels for CLT directory",             this.cltKernelDirectory, 60);
+    		gd.addCheckbox    ("Select aberration kernels for CLT directory",      false);
+    		
+    		gd.addStringField ("x3d output directory",                             this.x3dDirectory, 60);
+    		gd.addCheckbox    ("Select x3d output directory",                      false);
+
+    		gd.addStringField("Equirectangular maps directory (may be empty)",     this.equirectangularDirectory, 60);
+    		gd.addCheckbox("Select equirectangular maps directory",                false);
+    		gd.addStringField("Results directory",                                 this.resultsDirectory, 40);
+    		gd.addCheckbox("Select results directory",                             false);
+    		gd.addStringField("Source files prefix",                               this.sourcePrefix, 40);
+    		gd.addStringField("Source files suffix",                               this.sourceSuffix, 40);
+    		gd.addNumericField("First subcamera (in the source filename)",         this.firstSubCamera, 0);
+    		
+    		gd.addStringField("Sensor files prefix",                               this.sensorPrefix, 40);
+    		gd.addStringField("Sensor files suffix",                               this.sensorSuffix, 40);
+    		gd.addStringField("Kernel files (sharp) prefix",                       this.sharpKernelPrefix, 40);
+    		gd.addStringField("Kernel files (sharp) suffix",                       this.sharpKernelSuffix, 40);
+    		gd.addStringField("Kernel files (smooth) prefix",                      this.smoothKernelPrefix, 40);
+    		gd.addStringField("Kernel files (smooth) suffix",                      this.smoothKernelSuffix, 40);
+
+    		gd.addStringField("DCT kernel files  prefix",                          this.dctKernelPrefix, 40);
+    		gd.addStringField("DCT symmetical kernel files",                       this.dctSymSuffix, 40);
+    		gd.addStringField("DCT asymmetrical kernel files suffix",              this.dctAsymSuffix, 40);
+    		gd.addStringField("CLT kernel files  prefix",                          this.cltKernelPrefix, 40);
+    		gd.addStringField("CLT symmetical kernel files",                       this.cltSuffix, 40);
+    		
     		gd.addStringField("Equirectangular maps prefix",     this.equirectangularPrefix, 40);
     		gd.addStringField("Equirectangular maps suffix",     this.equirectangularSuffix, 40);
     		gd.addCheckbox("Cut rolling-over equirectangular images in two", this.equirectangularCut);
@@ -380,6 +438,7 @@ public class EyesisCorrectionParameters {
     		this.tiffCompression=   tiffCompressionChoices[gd.getNextChoiceIndex()];
     		this.toRGB=             gd.getNextBoolean();
     		this.jpeg=              gd.getNextBoolean();
+    		this.png=               gd.getNextBoolean();
     		this.save=              gd.getNextBoolean();
     		this.save16=            gd.getNextBoolean();
     		this.save32=            gd.getNextBoolean();
@@ -393,7 +452,10 @@ public class EyesisCorrectionParameters {
     		this.sourceDirectory=        gd.getNextString(); if (gd.getNextBoolean()) selectSourceDirectory(false, false); 
     		this.sensorDirectory=        gd.getNextString(); if (gd.getNextBoolean()) selectSensorDirectory(false, false); 
     		this.sharpKernelDirectory=   gd.getNextString(); if (gd.getNextBoolean()) selectSharpKernelDirectory(false, false); 
-    		this.smoothKernelDirectory=  gd.getNextString(); if (gd.getNextBoolean()) selectSmoothKernelDirectory(false, true); 
+    		this.smoothKernelDirectory=  gd.getNextString(); if (gd.getNextBoolean()) selectSmoothKernelDirectory(false, true);
+    		this.dctKernelDirectory=     gd.getNextString(); if (gd.getNextBoolean()) selectDCTKernelDirectory(false, true);
+    		this.cltKernelDirectory=     gd.getNextString(); if (gd.getNextBoolean()) selectCLTKernelDirectory(false, true);
+    		this.x3dDirectory=           gd.getNextString(); if (gd.getNextBoolean()) selectX3dDirectory(false, true);
     		this.equirectangularDirectory=  gd.getNextString(); if (gd.getNextBoolean()) selectEquirectangularDirectory(false, false); 
     		this.resultsDirectory=       gd.getNextString(); if (gd.getNextBoolean()) selectResultsDirectory(false, true); 
     		this.sourcePrefix=           gd.getNextString();
@@ -405,6 +467,11 @@ public class EyesisCorrectionParameters {
     		this.sharpKernelSuffix=      gd.getNextString();
     		this.smoothKernelPrefix=     gd.getNextString();
     		this.smoothKernelSuffix=     gd.getNextString();
+    		this.dctKernelPrefix=        gd.getNextString();
+    		this.dctSymSuffix=           gd.getNextString();
+    		this.dctAsymSuffix=          gd.getNextString();
+    		this.cltKernelPrefix=        gd.getNextString();
+    		this.cltSuffix=              gd.getNextString();
     		this.equirectangularPrefix=  gd.getNextString();
     		this.equirectangularSuffix=  gd.getNextString();
     		this.equirectangularCut=     gd.getNextBoolean();
@@ -412,10 +479,7 @@ public class EyesisCorrectionParameters {
     		this.planeMapSuffix=         gd.getNextString();
     		this.usePlaneProjection=     gd.getNextBoolean();
     		this.planeAsJPEG=            gd.getNextBoolean();
-
-
 //    		this.equirectangularSuffixA= gd.getNextString();
-    		
     		this.removeUnusedSensorData= gd.getNextBoolean();
     		this.swapSubchannels01= gd.getNextBoolean();
     		return true;
@@ -453,10 +517,15 @@ public class EyesisCorrectionParameters {
     	}
     	public int getChannelFromSourceTiff(String path){ return getChannelFromTiff(path, this.sourceSuffix);	}
     	public String getNameFromSourceTiff(String path){ return getNameFromTiff(path, this.sourceSuffix);	}
+    	
     	public int getChannelFromKernelTiff(String path, int type){return getChannelFromTiff(path, (type==0)?this.sharpKernelSuffix:this.smoothKernelSuffix);}
     	public String getNameFromKernelTiff(String path, int type){return getNameFromTiff(path, (type==0)?this.sharpKernelSuffix:this.smoothKernelSuffix);}
     	
+    	public int getChannelFromDCTTiff(String path, int type){return getChannelFromTiff(path, (type==0)?this.dctSymSuffix:this.dctAsymSuffix);}
+    	public String getNameFromDCTTiff(String path, int type){return getNameFromTiff(path, (type==0)?this.dctSymSuffix:this.dctAsymSuffix);}
     	
+    	public int getChannelFromCLTTiff(String path){return getChannelFromTiff(path, this.cltSuffix);}
+    	public String getNameFromCLTTiff(String path){return getNameFromTiff(path, this.cltSuffix);}
     	
     	public boolean selectSourceFiles(boolean allFiles) {
     		return selectSourceFiles(allFiles, 1); // debug level 1 - modify here
@@ -667,7 +736,7 @@ public class EyesisCorrectionParameters {
     					channelPaths[chn]=kernelFiles[fileNum];
     				} else {
     					if (debugLevel>0) System.out.println("Multiple kernel files for channel "+
-    							chn+": "+channelPaths[chn]+" and "+kernelFiles[fileNum]+". Usimg "+channelPaths[chn]);
+    							chn+": "+channelPaths[chn]+" and "+kernelFiles[fileNum]+". Using "+channelPaths[chn]);
     				}
     			}
     		}
@@ -701,7 +770,7 @@ public class EyesisCorrectionParameters {
 			}
 			if ((fileList==null) || (fileList.length==0)){
 				kernelFiles=CalibrationFileManagement.selectFiles(false,
-    					"Select"+((type==0)?"sharp":"smooth")+" kernel files files",
+    					"Select"+((type==0)?"sharp":"smooth")+" kernel files",
     					"Select",
     					kernelFilter,
     					defaultPaths); // String [] defaultPaths); //this.sourceDirectory // null
@@ -727,8 +796,147 @@ public class EyesisCorrectionParameters {
 			return kernelFiles;
     	}
     	
+    	public String [] selectDCTChannelFiles(
+    			int numChannels, // number of channels
+    			int debugLevel) { // will only open dialog if directory or files are not found
+    		String [] kernelFiles= selectDCTFiles(
+        			debugLevel);
+    		if (kernelFiles==null) return null;
+    		String [] channelPaths=new String[numChannels];
+    		for (int i=0;i<channelPaths.length;i++)channelPaths[i]=null;
+    		for (int fileNum=0;fileNum<kernelFiles.length;fileNum++){
+    			int chn=getChannelFromDCTTiff(kernelFiles[fileNum], 0); // 1 for asym files
+    			if ((chn>=0) && (chn<numChannels)){
+    				if (channelPaths[chn]==null){ // use first file for channel if there are multiple
+    					channelPaths[chn]=kernelFiles[fileNum];
+    				} else {
+    					if (debugLevel>0) System.out.println("Multiple kernel files for channel "+
+    							chn+": "+channelPaths[chn]+" and "+kernelFiles[fileNum]+". Using "+channelPaths[chn]);
+    				}
+    			}
+    		}
+    		return channelPaths;
+    	}
+    	
+    	public String [] selectDCTFiles(
+    			int debugLevel) { // will only open dialog if directory or files are not found
+    		String []defaultPaths = new String[1];
+    		String kernelDirectory=this.dctKernelDirectory;
+    		if ((kernelDirectory==null) || (kernelDirectory.length()<=1)){ // empty or "/"
+    			defaultPaths[0]="";
+    		} else {
+    			defaultPaths[0]=kernelDirectory+Prefs.getFileSeparator();
+    		}
+    		String [] extensions={this.dctSymSuffix};
+    		String  kernelPrefix= this.dctKernelPrefix;
+			CalibrationFileManagement.MultipleExtensionsFileFilter kernelFilter =
+				new CalibrationFileManagement.MultipleExtensionsFileFilter(kernelPrefix,extensions,kernelPrefix+
+						"*"+extensions[0]+" DCT symmetrical kernel files");
+			if (debugLevel>1) System.out.println("selectKernelFiles("+debugLevel+"): defaultPaths[0]="+defaultPaths[0]+" "+kernelPrefix+"*"+extensions[0]);
+
+			String [] kernelFiles=null;
+// try reading all matching files
+			File dir= new File (kernelDirectory);
+//			if (debugLevel>1) System.out.println("selectSensorFiles, dir="+this.sensorDirectory);
+			File [] fileList=null;
+			if (dir.exists()) {
+				fileList=dir.listFiles(kernelFilter);
+			}
+			if ((fileList==null) || (fileList.length==0)){
+				kernelFiles=CalibrationFileManagement.selectFiles(false,
+    					"Select DCT symmetrical kernel files",
+    					"Select",
+    					kernelFilter,
+    					defaultPaths); // String [] defaultPaths); //this.sourceDirectory // null
+    			if ((kernelFiles!=null) && (kernelFiles.length>0)){
+    				kernelDirectory=kernelFiles[0].substring(0, kernelFiles[0].lastIndexOf(Prefs.getFileSeparator()));
+    				dir= new File (kernelDirectory);
+//    				if (debugLevel>1) System.out.println("selectSensorFiles, dir="+this.sensorDirectory);
+    				fileList=dir.listFiles(kernelFilter);
+    				this.dctKernelDirectory= kernelDirectory;
+    			}
+			}
+			if ((fileList==null) || (fileList.length==0)) return null;
+			if (debugLevel>1) System.out.println("DCT kernel directory "+kernelDirectory+" has "+fileList.length+" matching files.");
+			kernelFiles = new String[fileList.length];
+			for (int i=0;i<kernelFiles.length;i++) kernelFiles[i]=fileList[i].getPath();
+			String directory=kernelFiles[0].substring(0, kernelFiles[0].lastIndexOf(Prefs.getFileSeparator()));
+			String prefix=kernelFiles[0].substring(directory.length()+1, kernelFiles[0].length()-extensions[0].length()-2); // all but NN
+			this.dctKernelDirectory=directory;
+			this.dctKernelPrefix=prefix;
+			return kernelFiles;
+    	}
+    	
 
     	
+    	public String [] selectCLTChannelFiles(
+    			int numChannels, // number of channels
+    			int debugLevel) { // will only open dialog if directory or files are not found
+    		String [] kernelFiles= selectCLTFiles(
+        			debugLevel);
+    		if (kernelFiles==null) return null;
+    		String [] channelPaths=new String[numChannels];
+    		for (int i=0;i<channelPaths.length;i++)channelPaths[i]=null;
+    		for (int fileNum=0;fileNum<kernelFiles.length;fileNum++){
+    			int chn=getChannelFromCLTTiff(kernelFiles[fileNum]);
+    			if ((chn>=0) && (chn<numChannels)){
+    				if (channelPaths[chn]==null){ // use first file for channel if there are multiple
+    					channelPaths[chn]=kernelFiles[fileNum];
+    				} else {
+    					if (debugLevel>0) System.out.println("Multiple kernel files for channel "+
+    							chn+": "+channelPaths[chn]+" and "+kernelFiles[fileNum]+". Using "+channelPaths[chn]);
+    				}
+    			}
+    		}
+    		return channelPaths;
+    	}
+    	
+    	public String [] selectCLTFiles(
+    			int debugLevel) { // will only open dialog if directory or files are not found
+    		String []defaultPaths = new String[1];
+    		String kernelDirectory=this.cltKernelDirectory;
+    		if ((kernelDirectory==null) || (kernelDirectory.length()<=1)){ // empty or "/"
+    			defaultPaths[0]="";
+    		} else {
+    			defaultPaths[0]=kernelDirectory+Prefs.getFileSeparator();
+    		}
+    		String [] extensions={this.cltSuffix};
+    		String  kernelPrefix= this.cltKernelPrefix;
+			CalibrationFileManagement.MultipleExtensionsFileFilter kernelFilter =
+				new CalibrationFileManagement.MultipleExtensionsFileFilter(kernelPrefix,extensions,kernelPrefix+
+						"*"+extensions[0]+" CLT symmetrical kernel files");
+			if (debugLevel>1) System.out.println("selectKernelFiles("+debugLevel+"): defaultPaths[0]="+defaultPaths[0]+" "+kernelPrefix+"*"+extensions[0]);
+
+			String [] kernelFiles=null;
+// try reading all matching files
+			File dir= new File (kernelDirectory);
+			File [] fileList=null;
+			if (dir.exists()) {
+				fileList=dir.listFiles(kernelFilter);
+			}
+			if ((fileList==null) || (fileList.length==0)){
+				kernelFiles=CalibrationFileManagement.selectFiles(false,
+    					"Select CLT kernel files",
+    					"Select",
+    					kernelFilter,
+    					defaultPaths); // String [] defaultPaths); //this.sourceDirectory // null
+    			if ((kernelFiles!=null) && (kernelFiles.length>0)){
+    				kernelDirectory=kernelFiles[0].substring(0, kernelFiles[0].lastIndexOf(Prefs.getFileSeparator()));
+    				dir= new File (kernelDirectory);
+    				fileList=dir.listFiles(kernelFilter);
+    				this.cltKernelDirectory= kernelDirectory;
+    			}
+			}
+			if ((fileList==null) || (fileList.length==0)) return null;
+			if (debugLevel>1) System.out.println("CLT kernel directory "+kernelDirectory+" has "+fileList.length+" matching files.");
+			kernelFiles = new String[fileList.length];
+			for (int i=0;i<kernelFiles.length;i++) kernelFiles[i]=fileList[i].getPath();
+			String directory=kernelFiles[0].substring(0, kernelFiles[0].lastIndexOf(Prefs.getFileSeparator()));
+			String prefix=kernelFiles[0].substring(directory.length()+1, kernelFiles[0].length()-extensions[0].length()-2); // all but NN
+			this.cltKernelDirectory=directory;
+			this.cltKernelPrefix=prefix;
+			return kernelFiles;
+    	}
     	
     	public String selectSourceDirectory(boolean smart, boolean newAllowed) { // normally newAllowed=false
     		String dir= CalibrationFileManagement.selectDirectory(
@@ -763,6 +971,7 @@ public class EyesisCorrectionParameters {
     		if (dir!=null) this.sharpKernelDirectory=dir;
     		return dir;
     	}
+    	
     	public String selectSmoothKernelDirectory(boolean smart, boolean newAllowed) {
     		String dir= CalibrationFileManagement.selectDirectory(
     				smart,
@@ -774,6 +983,43 @@ public class EyesisCorrectionParameters {
     		if (dir!=null) this.smoothKernelDirectory=dir;
     		return dir;
     	}
+    	
+    	public String selectDCTKernelDirectory(boolean smart, boolean newAllowed) {
+    		String dir= CalibrationFileManagement.selectDirectory(
+    				smart,
+    				newAllowed, // save  
+    				"DCT aberration kernels directory (sym and asym files)", // title
+    				"Select DCT aberration kernel sdirectory", // button
+    				null, // filter
+    				this.dctKernelDirectory); //this.sourceDirectory);
+    		if (dir!=null) this.dctKernelDirectory=dir;
+    		return dir;
+    	}
+    	
+    	public String selectCLTKernelDirectory(boolean smart, boolean newAllowed) {
+    		String dir= CalibrationFileManagement.selectDirectory(
+    				smart,
+    				newAllowed, // save  
+    				"CLT aberration kernels directory", // title
+    				"Select CLT aberration kernels directory", // button
+    				null, // filter
+    				this.cltKernelDirectory); //this.sourceDirectory);
+    		if (dir!=null) this.cltKernelDirectory=dir;
+    		return dir;
+    	}
+
+    	public String selectX3dDirectory(boolean smart, boolean newAllowed) {
+    		String dir= CalibrationFileManagement.selectDirectory(
+    				smart,
+    				newAllowed, // save  
+    				"x3d output directory", // title
+    				"Select x3d output directory", // button
+    				null, // filter
+    				this.x3dDirectory); //this.sourceDirectory);
+    		if (dir!=null) this.x3dDirectory=dir;
+    		return dir;
+    	}
+    	
     	public String selectEquirectangularDirectory(boolean smart, boolean newAllowed) {
     		String dir= CalibrationFileManagement.selectDirectory(
     				smart,
@@ -1073,20 +1319,32 @@ public class EyesisCorrectionParameters {
 
   /* ======================================================================== */
     public static class RGBParameters {
-  		public double r_min;
-  		public double g_min;
-  		public double b_min;
-  		public double r_max;
-  		public double g_max;
-  		public double b_max;
+  		public double r_min = 0.075;
+  		public double g_min = 0.075;
+  		public double b_min = 0.075;
+  		public double r_max = 1.0;
+  		public double g_max = 1.0;
+  		public double b_max = 1.0;
+  		public double alpha_min = 0.0;
+  		public double alpha_max = 1.0;
 
-  		public RGBParameters(double r_min, double g_min, double b_min, double r_max, double g_max, double b_max) {
+/*  		public RGBParameters(double r_min, double g_min, double b_min, double r_max, double g_max, double b_max) {
   			this.r_min = r_min;
   			this.g_min = g_min;
   			this.b_min = b_min;
   			this.r_max = r_max;
   			this.g_max = g_max;
   			this.b_max = b_max;
+  		} */
+  		public RGBParameters(double r_min, double g_min, double b_min, double r_max, double g_max, double b_max, double alpha_min, double alpha_max) {
+  			this.r_min = r_min;
+  			this.g_min = g_min;
+  			this.b_min = b_min;
+  			this.r_max = r_max;
+  			this.g_max = g_max;
+  			this.b_max = b_max;
+  			this.alpha_min = alpha_min;
+  			this.alpha_max = alpha_max;
   		}
   		public void setProperties(String prefix,Properties properties){
   			properties.setProperty(prefix+"r_min",this.r_min+"");
@@ -1095,6 +1353,8 @@ public class EyesisCorrectionParameters {
   			properties.setProperty(prefix+"r_max",this.r_max+"");
   			properties.setProperty(prefix+"g_max",this.g_max+"");
   			properties.setProperty(prefix+"b_max",this.b_max+"");
+  			properties.setProperty(prefix+"alpha_min",this.alpha_min+"");
+  			properties.setProperty(prefix+"alpha_max",this.alpha_max+"");
   		}
   		public void getProperties(String prefix,Properties properties){
   			this.r_min=Double.parseDouble(properties.getProperty(prefix+"r_min"));
@@ -1103,6 +1363,8 @@ public class EyesisCorrectionParameters {
   			this.r_max=Double.parseDouble(properties.getProperty(prefix+"r_max"));
   			this.g_max=Double.parseDouble(properties.getProperty(prefix+"g_max"));
   			this.b_max=Double.parseDouble(properties.getProperty(prefix+"b_max"));
+  			if (properties.getProperty(prefix+"alpha_min")!=null)  this.alpha_min=Double.parseDouble(properties.getProperty(prefix+"alpha_min"));
+  			if (properties.getProperty(prefix+"alpha_max")!=null)  this.alpha_max=Double.parseDouble(properties.getProperty(prefix+"alpha_max"));
   		}
   		
   	}
@@ -1653,7 +1915,989 @@ public class EyesisCorrectionParameters {
   			this.addBottom=Integer.parseInt(properties.getProperty(prefix+"addBottom"));
   		}
   	}
-  /* ======================================================================== */
+    public static class CLTParameters {
+  		public int        transform_size =      8; //
+  		public int        clt_window =          1; // currently only 3 types of windows - 0 (none), 1 and 2
+  		public double     shift_x =           0.0;
+  		public double     shift_y =           0.0;
+  		public int        iclt_mask =          15;  // which transforms to combine
+  		public int        tileX =             258;  // number of kernel tile (0..163) 
+  		public int        tileY =             133;  // number of kernel tile (0..122)
+  		public int        dbg_mode =            0;  // 0 - normal, +1 - no DCT/IDCT
+  		public int        ishift_x =            0;  // debug feature - shift source image by this pixels left
+  		public int        ishift_y =            0;  // debug feature - shift source image by this pixels down
+  		public double     fat_zero =          0.0;  // modify phase correlation to prevent division by very small numbers
+  		public double     corr_sigma =        0.8;  // LPF correlarion sigma
+  		public boolean    norm_kern =         true; // normalize kernels
+  		public boolean    gain_equalize =     false;// equalize green channel gain
+  		public boolean    colors_equalize =   true; // equalize R/G, B/G of the individual channels
+  		public double     novignetting_r    = 0.2644; // reg gain in the center of sensor calibration R (instead of vignetting)
+  		public double     novignetting_g    = 0.3733; // green gain in the center of sensor calibration G
+  		public double     novignetting_b    = 0.2034; // blue gain in the center of sensor calibration B
+  		public double     scale_r =           1.0; // extra gain correction after vignetting or nonvignetting, before other processing
+  		public double     scale_g =           1.0;
+  		public double     scale_b =           1.0;
+  		public double     vignetting_max    = 0.4; // value in vignetting data to correspond to 1x in the kernel
+  		public double     vignetting_range  = 5.0; // do not try to correct vignetting less than vignetting_max/vignetting_range
+  		public int        kernel_step =       16;  // source kernels step in pixels (have 1 kernel margin on each side)  
+  		public double     disparity  =        0.0; // nominal disparity between side of square cameras (pix)
+  		public boolean    correlate =         true; // calculate correlation
+  		public int        corr_mask =         15;  // bitmask of pairs to combine in the composite
+  		public boolean    corr_sym =          false; // combine correlation with mirrored around disparity direction
+  		public boolean    corr_keep =         true;  // keep all partial correlations (otherwise - only combined one)
+  		public boolean    corr_show =         false; // Show combined correlations
+  		public boolean    corr_mismatch=      false; // calculate per-pair X/Y variations of measured correlations 
+// TODO: what to do if some occlusion is present (only some channels correlate)  		
+  		public double     corr_offset =       0.1; //0.1;  // add to pair correlation before multiplying by other pairs (between sum and product)
+  		                                            // negative - add, not mpy
+  		public double     corr_red =          0.5;  // Red to green correlation weight 
+  		public double     corr_blue =         0.2;  // Blue to green correlation weight
+  		public boolean    corr_normalize =    false; // normalize each correlation tile by rms
+  		public double     min_corr =          0.001; // minimal correlation value to consider valid 
+  		public double     min_corr_normalized =  2.0; // minimal correlation value to consider valid when normalizing correlation results 
+  		public double     max_corr_sigma =    1.5;  // weights of points around global max to find fractional
+  		                                            // pixel location by quadratic approximation
+  		public double     max_corr_radius =   3.5;  // maximal distance from int max to consider
+  		
+  		public int        enhortho_width =    2;    // reduce weight of center correlation pixels from center (0 - none, 1 - center, 2 +/-1 from center)
+  		public double     enhortho_scale =    0.2;  // multiply center correlation pixels (inside enhortho_width)
+  		
+  		public boolean    max_corr_double =   false; // NOT USED double pass when masking center of mass to reduce preference for integer values
+  		public int        corr_mode =         2;    // which correlation mode to use: 0 - integer max, 1 - center of mass, 2 - polynomial
+  		
+          // pixel location by quadratic approximation
+  		public double     corr_border_contrast = 0.01; // contrast of dotted border on correlation results
+  		
+  		public int        tile_task_op =      0xff;   // bitmask of operation modes applied to tiles (0 - nothing), bits TBD later
+  		                                           // +(0..f) - images, +(00.f0) - process pairs + 256 - force disparity when combining images
+  		// window to process tiles (later arbitrary masks will be generated to follow particular stages);
+  		public int        tile_task_wl =      0;   // 
+  		public int        tile_task_wt =      0;   // 
+  		public int        tile_task_ww =      324; // 
+  		public int        tile_task_wh =      242; //
+  		public double     min_shot =          10.0;  // Do not adjust for shot noise if lower than
+  		public double     scale_shot =        3.0;   // scale when dividing by sqrt
+  		
+  		public double     diff_sigma =        5.0;   // RMS difference from average to reduce weights (~ 1.0 - 1/255 full scale image)
+  		public double     diff_threshold =    1.5;   // RMS difference from average to discard channel (~ 1.0 - 1/255 full scale image)
+  		public boolean    diff_gauss =        true;  // when averaging images, use gaussian around average as weight (false - sharp all/nothing)
+  		public double     min_agree =         3.0;   // minimal number of channels to agree on a point (real number to work with fuzzy averages)
+  		public boolean    dust_remove =       true;  // Do not reduce average weight when only one image differes much from the average
+  		
+  		public boolean    keep_weights =      true;  // add port weights to RGBA stack (debug feature)
+  		public boolean    sharp_alpha =       false; // combining mode for alpha channel: false - treat as RGB, true - apply center 8x8 only
+  		public double     alpha0 = 	          0.6; // > .525 Alpha channel 0.0 thereshold (lower - transparent) (watch for far objects)
+  		public double     alpha1 = 	          0.8; // Alpha channel 1.0 threshold (higher - opaque) (watch for window dust)
+  		
+  		public boolean    gen_chn_stacks =    false; // generate shifted channel rgb stacks
+  		public boolean    gen_chn_img =       true;  // generate shifted channel images
+  		public boolean    show_nonoverlap =   true;  // show result RGBA before overlap combined (first channels, then RGBA combined?)
+  		public boolean    show_overlap =      true;  // show result RGBA (first channels, then RGBA combined?)
+  		public boolean    show_rgba_color =   true;  // show combined color image
+  		public boolean    show_map =          true;  // show disparity maps
+  		
+  		public double     disp_scan_start =   0.0;   // disparity scan start value
+  		public double     disp_scan_step =    1.0;   // disparity scan step
+  		public int        disp_scan_count =   10;    // disparity scan number of measurements
+  		
+  		public double     fine_corr_x_0 =     0.0;   // additionally shift image in port 0 in x direction
+  		public double     fine_corr_y_0 =     0.0;   // additionally shift image in port 0 in y direction
+  		public double     fine_corr_x_1 =     0.0;   // additionally shift image in port 1 in x direction
+  		public double     fine_corr_y_1 =     0.0;   // additionally shift image in port 1 in y direction
+  		public double     fine_corr_x_2 =     0.0;   // additionally shift image in port 2 in x direction
+  		public double     fine_corr_y_2 =     0.0;   // additionally shift image in port 2 in y direction
+  		public double     fine_corr_x_3 =     0.0;   // additionally shift image in port 3 in x direction
+  		public double     fine_corr_y_3 =     0.0;   // additionally shift image in port 3 in y direction
+  		
+  		public double     fcorr_min_stength = 0.005; // minimal correlation strength to apply fine correction
+  		public double     fcorr_disp_diff =   3.0;   // consider only tiles with absolute residual disparity lower than
+  		public boolean    fcorr_quadratic =   true;  // Use quadratic polynomial for fine correction (false - only linear)
+  		public boolean    fcorr_ignore =      false; // Ignore currently calculated fine correction
+  		
+  		public double     corr_magic_scale =  0.85;  // reported correlation offset vs. actual one (not yet understood)
+  		
+  		// 3d reconstruction
+  		public boolean    show_textures    = true;  // show generated textures
+  		public boolean    debug_filters     = false;// show intermediate results of filtering
+  		public double     min_smth         = 0.25;  // 0.25 minimal noise-normalized pixel difference in a channel to suspect something    
+  		public double     sure_smth        = 2.0;   // reliable noise-normalized pixel difference in a channel to have something    
+  		public double     bgnd_range       = 0.3;   // disparity range to be considered background
+  		public double     other_range      = 2.0;   // disparity difference from center (provided) disparity to trust
+  		
+  		public double     bgnd_sure        = 0.18;  // minimal strength to be considered definitely background
+  		public double     bgnd_maybe       = 0.1; // maximal strength to ignore as non-background
+//  		public double     bgnd_2diff       = 0.005; // maximal strength to ignore as non-background
+  		public int        min_clstr_seed   = 2;     // number of tiles in a cluster to seed (just background?)
+  		public int        min_clstr_lone   = 4;     // number of tiles in a cluster not close to other clusters (more than 2 tiles apart)
+  		public int        fill_gaps        = 4;     // same as in grow - 1:  4 directions by 1 step, 2: 8 directions by 1 step. +2*n - alternating hor/vert
+  		public int        min_clstr_block  = 3;     // number of tiles in a cluster to block (just non-background?)
+  		public int        bgnd_grow        = 2;     // number of tiles to grow (1 - hor/vert, 2 - hor/vert/diagonal)
+  		
+//  		public double     ortho_min        = 0.09;  // minimal strength of hor/vert correlation to be used instead of full 4-pair correlation
+  		public double     ortho_min_hor    = 0.07;  // minimal strength of hor correlation to be used instead of full 4-pair correlation - 
+  		public double     ortho_min_vert   = 0.15;  // minimal strength of vert correlation to be used instead of full 4-pair correlation
+  		public double     ortho_asym       = 1.2;   // vert/hor (or hor/vert) strength to be used instead of the full correlation
+  		public double     ortho_sustain    = 0.05;  // minimal strength of hor/vert to bridge over 
+  		public int        ortho_run        = 3;     // minimal run of hor/vert tiles to be considered (at least from one side)
+  		public double     ortho_minmax     = 0.09;  // minimal maximal strength in an ortho run 
+  		public int        ortho_bridge     = 10;    // number of tiles to bridge over hor/vert gaps
+  		public double     ortho_rms        = 0.3;   // maximal disparity RMS in a run to replace by average
+  		public int        ortho_half_length = 4;    // convolve hor/vert strength by 3*(2*l+1) kernels to detect multi-tile features 
+  		public double     ortho_mix        = 0.5;   // Fraction ovf convolved ortho in a mix with raw 
+  		
+  		
+
+  		
+  		public CLTParameters(){}
+  		public void setProperties(String prefix,Properties properties){
+  			properties.setProperty(prefix+"transform_size",   this.transform_size+"");
+  			properties.setProperty(prefix+"clt_window",       this.clt_window+"");
+  			properties.setProperty(prefix+"shift_x",          this.shift_x+"");
+  			properties.setProperty(prefix+"shift_y",          this.shift_y+"");
+  			properties.setProperty(prefix+"iclt_mask",        this.iclt_mask+"");
+  			properties.setProperty(prefix+"tileX",            this.tileX+"");
+  			properties.setProperty(prefix+"tileY",            this.tileY+"");
+  			properties.setProperty(prefix+"dbg_mode",         this.dbg_mode+"");
+  			properties.setProperty(prefix+"ishift_x",         this.ishift_x+"");
+  			properties.setProperty(prefix+"ishift_y",         this.ishift_y+"");
+  			properties.setProperty(prefix+"fat_zero",         this.fat_zero+"");
+  			properties.setProperty(prefix+"corr_sigma",       this.corr_sigma+"");
+			properties.setProperty(prefix+"norm_kern",        this.norm_kern+"");
+			properties.setProperty(prefix+"gain_equalize",    this.gain_equalize+"");
+			properties.setProperty(prefix+"colors_equalize",  this.colors_equalize+"");
+  			properties.setProperty(prefix+"novignetting_r",   this.novignetting_r+"");
+  			properties.setProperty(prefix+"novignetting_g",   this.novignetting_g+"");
+  			properties.setProperty(prefix+"novignetting_b",   this.novignetting_b+"");
+  			properties.setProperty(prefix+"scale_r",          this.scale_r+"");
+  			properties.setProperty(prefix+"scale_g",          this.scale_g+"");
+  			properties.setProperty(prefix+"scale_b",          this.scale_b+"");
+  			properties.setProperty(prefix+"vignetting_max",   this.vignetting_max+"");
+  			properties.setProperty(prefix+"vignetting_range", this.vignetting_range+"");
+  			properties.setProperty(prefix+"kernel_step",      this.kernel_step+"");
+  			properties.setProperty(prefix+"disparity",        this.disparity +"");
+			properties.setProperty(prefix+"correlate",        this.correlate+"");
+  			properties.setProperty(prefix+"corr_mask",        this.corr_mask+"");
+			properties.setProperty(prefix+"corr_sym",         this.corr_sym+"");
+			properties.setProperty(prefix+"corr_keep",        this.corr_keep+"");
+			properties.setProperty(prefix+"corr_show",        this.corr_show+"");
+			properties.setProperty(prefix+"corr_mismatch",    this.corr_mismatch+"");
+  			properties.setProperty(prefix+"corr_offset",      this.corr_offset +"");
+  			properties.setProperty(prefix+"corr_red",         this.corr_red +"");
+  			properties.setProperty(prefix+"corr_blue",        this.corr_blue +"");
+			properties.setProperty(prefix+"corr_normalize",   this.corr_normalize+"");
+  			properties.setProperty(prefix+"min_corr",         this.min_corr +"");
+  			properties.setProperty(prefix+"min_corr_normalized",this.min_corr_normalized +"");
+  			properties.setProperty(prefix+"max_corr_sigma",   this.max_corr_sigma +"");
+  			properties.setProperty(prefix+"max_corr_radius",  this.max_corr_radius +"");
+  			
+  			properties.setProperty(prefix+"enhortho_width",   this.enhortho_width +"");
+  			properties.setProperty(prefix+"enhortho_scale",   this.enhortho_scale +"");
+
+  			
+  			properties.setProperty(prefix+"max_corr_double",  this.max_corr_double+"");
+  			properties.setProperty(prefix+"corr_mode",        this.corr_mode+"");
+  			properties.setProperty(prefix+"corr_border_contrast", this.corr_border_contrast +"");
+  			properties.setProperty(prefix+"tile_task_op",     this.tile_task_op+"");
+  			properties.setProperty(prefix+"tile_task_wl",     this.tile_task_wl+"");
+  			properties.setProperty(prefix+"tile_task_wt",     this.tile_task_wt+"");
+  			properties.setProperty(prefix+"tile_task_ww",     this.tile_task_ww+"");
+  			properties.setProperty(prefix+"tile_task_wh",     this.tile_task_wh+"");
+  			properties.setProperty(prefix+"min_shot",       this.min_shot +"");
+  			properties.setProperty(prefix+"scale_shot",       this.scale_shot +"");
+  			properties.setProperty(prefix+"diff_sigma",       this.diff_sigma +"");
+  			properties.setProperty(prefix+"diff_threshold",   this.diff_threshold +"");
+			properties.setProperty(prefix+"diff_gauss",       this.diff_gauss+"");
+  			properties.setProperty(prefix+"min_agree",        this.min_agree +"");
+			properties.setProperty(prefix+"dust_remove",      this.dust_remove+"");
+			properties.setProperty(prefix+"keep_weights",     this.keep_weights+"");
+			properties.setProperty(prefix+"sharp_alpha",      this.sharp_alpha+"");
+
+			properties.setProperty(prefix+"alpha0",           this.alpha0 +"");
+  			properties.setProperty(prefix+"alpha1",           this.alpha1 +"");
+
+  			properties.setProperty(prefix+"gen_chn_stacks",   this.gen_chn_stacks+"");
+			properties.setProperty(prefix+"gen_chn_img",      this.gen_chn_img+"");
+			properties.setProperty(prefix+"show_nonoverlap",  this.show_nonoverlap+"");
+			properties.setProperty(prefix+"show_overlap",     this.show_overlap+"");
+			properties.setProperty(prefix+"show_rgba_color",  this.show_rgba_color+"");
+			properties.setProperty(prefix+"show_map",         this.show_map+"");
+  			properties.setProperty(prefix+"disp_scan_start",  this.disp_scan_start +"");
+  			properties.setProperty(prefix+"disp_scan_step",   this.disp_scan_step +"");
+  			properties.setProperty(prefix+"disp_scan_count",  this.disp_scan_count+"");
+
+  			properties.setProperty(prefix+"fine_corr_x_0",    this.fine_corr_x_0 +"");
+  			properties.setProperty(prefix+"fine_corr_y_0",    this.fine_corr_y_0 +"");
+  			properties.setProperty(prefix+"fine_corr_x_1",    this.fine_corr_x_1 +"");
+  			properties.setProperty(prefix+"fine_corr_y_1",    this.fine_corr_y_1 +"");
+  			properties.setProperty(prefix+"fine_corr_x_2",    this.fine_corr_x_2 +"");
+  			properties.setProperty(prefix+"fine_corr_y_2",    this.fine_corr_y_2 +"");
+  			properties.setProperty(prefix+"fine_corr_x_3",    this.fine_corr_x_3 +"");
+  			properties.setProperty(prefix+"fine_corr_y_3",    this.fine_corr_y_3 +"");
+
+  			properties.setProperty(prefix+"fcorr_min_stength",this.fcorr_min_stength +"");
+  			properties.setProperty(prefix+"fcorr_disp_diff",  this.fcorr_disp_diff +"");
+			properties.setProperty(prefix+"fcorr_quadratic",  this.fcorr_quadratic+"");
+			properties.setProperty(prefix+"fcorr_ignore",     this.fcorr_ignore+"");
+
+			properties.setProperty(prefix+"corr_magic_scale", this.corr_magic_scale +"");
+  			
+			properties.setProperty(prefix+"show_textures",    this.show_textures+"");
+			properties.setProperty(prefix+"debug_filters",    this.debug_filters+"");
+
+			properties.setProperty(prefix+"min_smth",         this.min_smth +"");
+			properties.setProperty(prefix+"sure_smth",        this.sure_smth +"");
+			properties.setProperty(prefix+"bgnd_range",       this.bgnd_range +"");
+			properties.setProperty(prefix+"other_range",      this.other_range +"");
+			properties.setProperty(prefix+"bgnd_sure",        this.bgnd_sure +"");
+			properties.setProperty(prefix+"bgnd_maybe",       this.bgnd_maybe +"");
+  			properties.setProperty(prefix+"min_clstr_seed",   this.min_clstr_seed+"");
+  			properties.setProperty(prefix+"min_clstr_lone",   this.min_clstr_lone+"");
+  			properties.setProperty(prefix+"fill_gaps",        this.fill_gaps+"");
+  			properties.setProperty(prefix+"min_clstr_block",  this.min_clstr_block+"");
+  			properties.setProperty(prefix+"bgnd_grow",        this.bgnd_grow+"");
+  			properties.setProperty(prefix+"ortho_min_hor",    this.ortho_min_hor +"");
+  			properties.setProperty(prefix+"ortho_min_vert",   this.ortho_min_vert +"");
+			properties.setProperty(prefix+"ortho_asym",       this.ortho_asym +"");
+
+			properties.setProperty(prefix+"ortho_sustain",    this.ortho_sustain +"");
+  			properties.setProperty(prefix+"ortho_run",        this.ortho_run+"");
+			properties.setProperty(prefix+"ortho_minmax",     this.ortho_minmax +"");
+  			properties.setProperty(prefix+"ortho_bridge",     this.ortho_bridge+"");
+			properties.setProperty(prefix+"ortho_rms",        this.ortho_rms +"");
+  			properties.setProperty(prefix+"ortho_half_length",this.ortho_half_length+"");
+			properties.setProperty(prefix+"ortho_mix",        this.ortho_mix +"");
+  		}
+  		public void getProperties(String prefix,Properties properties){
+  			if (properties.getProperty(prefix+"transform_size")!=null) this.transform_size=Integer.parseInt(properties.getProperty(prefix+"transform_size"));
+  			if (properties.getProperty(prefix+"clt_window")!=null)     this.clt_window=Integer.parseInt(properties.getProperty(prefix+"clt_window"));
+  			if (properties.getProperty(prefix+"shift_x")!=null)        this.shift_x=Double.parseDouble(properties.getProperty(prefix+"shift_x"));
+  			if (properties.getProperty(prefix+"shift_y")!=null)        this.shift_y=Double.parseDouble(properties.getProperty(prefix+"shift_y"));
+  			if (properties.getProperty(prefix+"iclt_mask")!=null)      this.iclt_mask=Integer.parseInt(properties.getProperty(prefix+"iclt_mask"));
+  			if (properties.getProperty(prefix+"tileX")!=null)          this.tileX=Integer.parseInt(properties.getProperty(prefix+"tileX"));
+  			if (properties.getProperty(prefix+"tileY")!=null)          this.tileY=Integer.parseInt(properties.getProperty(prefix+"tileY"));
+  			if (properties.getProperty(prefix+"dbg_mode")!=null)       this.dbg_mode=Integer.parseInt(properties.getProperty(prefix+"dbg_mode"));
+  			if (properties.getProperty(prefix+"ishift_x")!=null)       this.ishift_x=Integer.parseInt(properties.getProperty(prefix+"ishift_x"));
+  			if (properties.getProperty(prefix+"ishift_y")!=null)       this.ishift_y=Integer.parseInt(properties.getProperty(prefix+"ishift_y"));
+  			if (properties.getProperty(prefix+"fat_zero")!=null)       this.fat_zero=Double.parseDouble(properties.getProperty(prefix+"fat_zero"));
+  			if (properties.getProperty(prefix+"corr_sigma")!=null)     this.corr_sigma=Double.parseDouble(properties.getProperty(prefix+"corr_sigma"));
+  			if (properties.getProperty(prefix+"norm_kern")!=null)      this.norm_kern=Boolean.parseBoolean(properties.getProperty(prefix+"norm_kern"));
+  			if (properties.getProperty(prefix+"gain_equalize")!=null)  this.gain_equalize=Boolean.parseBoolean(properties.getProperty(prefix+"gain_equalize"));
+  			if (properties.getProperty(prefix+"colors_equalize")!=null)this.colors_equalize=Boolean.parseBoolean(properties.getProperty(prefix+"colors_equalize"));
+  			if (properties.getProperty(prefix+"novignetting_r")!=null) this.novignetting_r=Double.parseDouble(properties.getProperty(prefix+"novignetting_r"));
+  			if (properties.getProperty(prefix+"novignetting_g")!=null) this.novignetting_g=Double.parseDouble(properties.getProperty(prefix+"novignetting_g"));
+  			if (properties.getProperty(prefix+"novignetting_b")!=null) this.novignetting_b=Double.parseDouble(properties.getProperty(prefix+"novignetting_b"));
+  			if (properties.getProperty(prefix+"scale_r")!=null)        this.scale_r=Double.parseDouble(properties.getProperty(prefix+"scale_r"));
+  			if (properties.getProperty(prefix+"scale_g")!=null)        this.scale_g=Double.parseDouble(properties.getProperty(prefix+"scale_g"));
+  			if (properties.getProperty(prefix+"scale_b")!=null)        this.scale_b=Double.parseDouble(properties.getProperty(prefix+"scale_b"));
+  			if (properties.getProperty(prefix+"vignetting_max")!=null) this.vignetting_max=Double.parseDouble(properties.getProperty(prefix+"vignetting_max"));
+  			if (properties.getProperty(prefix+"vignetting_range")!=null) this.vignetting_range=Double.parseDouble(properties.getProperty(prefix+"vignetting_range"));
+  			if (properties.getProperty(prefix+"kernel_step")!=null)    this.kernel_step=Integer.parseInt(properties.getProperty(prefix+"kernel_step"));
+  			if (properties.getProperty(prefix+"disparity")!=null)      this.disparity=Double.parseDouble(properties.getProperty(prefix+"disparity"));
+  			if (properties.getProperty(prefix+"correlate")!=null)      this.correlate=Boolean.parseBoolean(properties.getProperty(prefix+"correlate"));
+  			if (properties.getProperty(prefix+"corr_mask")!=null)      this.corr_mask=Integer.parseInt(properties.getProperty(prefix+"corr_mask"));
+  			if (properties.getProperty(prefix+"corr_sym")!=null)       this.corr_sym=Boolean.parseBoolean(properties.getProperty(prefix+"corr_sym"));
+  			if (properties.getProperty(prefix+"corr_keep")!=null)      this.corr_keep=Boolean.parseBoolean(properties.getProperty(prefix+"corr_keep"));
+  			if (properties.getProperty(prefix+"corr_show")!=null)      this.corr_show=Boolean.parseBoolean(properties.getProperty(prefix+"corr_show"));
+  			if (properties.getProperty(prefix+"corr_mismatch")!=null)  this.corr_mismatch=Boolean.parseBoolean(properties.getProperty(prefix+"corr_mismatch"));
+  			if (properties.getProperty(prefix+"corr_offset")!=null)    this.corr_offset=Double.parseDouble(properties.getProperty(prefix+"corr_offset"));
+  			if (properties.getProperty(prefix+"corr_red")!=null)       this.corr_red=Double.parseDouble(properties.getProperty(prefix+"corr_red"));
+  			if (properties.getProperty(prefix+"corr_blue")!=null)      this.corr_blue=Double.parseDouble(properties.getProperty(prefix+"corr_blue"));
+  			if (properties.getProperty(prefix+"corr_normalize")!=null) this.corr_normalize=Boolean.parseBoolean(properties.getProperty(prefix+"corr_normalize"));
+  			if (properties.getProperty(prefix+"min_corr")!=null)       this.min_corr=Double.parseDouble(properties.getProperty(prefix+"min_corr"));
+  			if (properties.getProperty(prefix+"min_corr_normalized")!=null)this.min_corr_normalized=Double.parseDouble(properties.getProperty(prefix+"min_corr_normalized"));
+  			if (properties.getProperty(prefix+"max_corr_sigma")!=null) this.max_corr_sigma=Double.parseDouble(properties.getProperty(prefix+"max_corr_sigma"));
+  			if (properties.getProperty(prefix+"max_corr_radius")!=null)this.max_corr_radius=Double.parseDouble(properties.getProperty(prefix+"max_corr_radius"));
+
+  			if (properties.getProperty(prefix+"enhortho_width")!=null) this.enhortho_width=Integer.parseInt(properties.getProperty(prefix+"enhortho_width"));
+  			if (properties.getProperty(prefix+"enhortho_scale")!=null) this.enhortho_scale=Double.parseDouble(properties.getProperty(prefix+"enhortho_scale"));
+  			
+  			if (properties.getProperty(prefix+"max_corr_double")!=null)this.max_corr_double=Boolean.parseBoolean(properties.getProperty(prefix+"max_corr_double"));
+  			if (properties.getProperty(prefix+"corr_mode")!=null)      this.corr_mode=Integer.parseInt(properties.getProperty(prefix+"corr_mode"));
+  			if (properties.getProperty(prefix+"corr_border_contrast")!=null) this.corr_border_contrast=Double.parseDouble(properties.getProperty(prefix+"corr_border_contrast"));
+  			if (properties.getProperty(prefix+"tile_task_op")!=null)   this.tile_task_op=Integer.parseInt(properties.getProperty(prefix+"tile_task_op"));
+  			if (properties.getProperty(prefix+"tile_task_wl")!=null)   this.tile_task_wl=Integer.parseInt(properties.getProperty(prefix+"tile_task_wl"));
+  			if (properties.getProperty(prefix+"tile_task_wt")!=null)   this.tile_task_wt=Integer.parseInt(properties.getProperty(prefix+"tile_task_wt"));
+  			if (properties.getProperty(prefix+"tile_task_ww")!=null)   this.tile_task_ww=Integer.parseInt(properties.getProperty(prefix+"tile_task_ww"));
+  			if (properties.getProperty(prefix+"tile_task_wh")!=null)   this.tile_task_wh=Integer.parseInt(properties.getProperty(prefix+"tile_task_wh"));
+  			if (properties.getProperty(prefix+"min_shot")!=null)       this.min_shot=Double.parseDouble(properties.getProperty(prefix+"min_shot"));
+  			if (properties.getProperty(prefix+"scale_shot")!=null)     this.scale_shot=Double.parseDouble(properties.getProperty(prefix+"scale_shot"));
+  			if (properties.getProperty(prefix+"diff_sigma")!=null)     this.diff_sigma=Double.parseDouble(properties.getProperty(prefix+"diff_sigma"));
+  			if (properties.getProperty(prefix+"diff_threshold")!=null) this.diff_threshold=Double.parseDouble(properties.getProperty(prefix+"diff_threshold"));
+  			if (properties.getProperty(prefix+"diff_gauss")!=null)     this.diff_gauss=Boolean.parseBoolean(properties.getProperty(prefix+"diff_gauss"));
+  			if (properties.getProperty(prefix+"min_agree")!=null)      this.min_agree=Double.parseDouble(properties.getProperty(prefix+"min_agree"));
+  			if (properties.getProperty(prefix+"dust_remove")!=null)    this.dust_remove=Boolean.parseBoolean(properties.getProperty(prefix+"dust_remove"));
+  			if (properties.getProperty(prefix+"keep_weights")!=null)   this.keep_weights=Boolean.parseBoolean(properties.getProperty(prefix+"keep_weights"));
+  			if (properties.getProperty(prefix+"sharp_alpha")!=null)    this.sharp_alpha=Boolean.parseBoolean(properties.getProperty(prefix+"sharp_alpha"));
+  			if (properties.getProperty(prefix+"alpha0")!=null)         this.alpha0=Double.parseDouble(properties.getProperty(prefix+"alpha0"));
+  			if (properties.getProperty(prefix+"alpha1")!=null)         this.alpha1=Double.parseDouble(properties.getProperty(prefix+"alpha1"));
+  			if (properties.getProperty(prefix+"gen_chn_stacks")!=null) this.gen_chn_stacks=Boolean.parseBoolean(properties.getProperty(prefix+"gen_chn_stacks"));
+  			if (properties.getProperty(prefix+"gen_chn_img")!=null)    this.gen_chn_img=Boolean.parseBoolean(properties.getProperty(prefix+"gen_chn_img"));
+  			if (properties.getProperty(prefix+"show_nonoverlap")!=null)this.show_nonoverlap=Boolean.parseBoolean(properties.getProperty(prefix+"show_nonoverlap"));
+  			if (properties.getProperty(prefix+"show_overlap")!=null)   this.show_overlap=Boolean.parseBoolean(properties.getProperty(prefix+"show_overlap"));
+  			if (properties.getProperty(prefix+"show_rgba_color")!=null)this.show_rgba_color=Boolean.parseBoolean(properties.getProperty(prefix+"show_rgba_color"));
+  			if (properties.getProperty(prefix+"show_map")!=null)       this.show_map=Boolean.parseBoolean(properties.getProperty(prefix+"show_map"));
+  			if (properties.getProperty(prefix+"disp_scan_start")!=null)this.disp_scan_start=Double.parseDouble(properties.getProperty(prefix+"disp_scan_start"));
+  			if (properties.getProperty(prefix+"disp_scan_step")!=null) this.disp_scan_step=Double.parseDouble(properties.getProperty(prefix+"disp_scan_step"));
+  			if (properties.getProperty(prefix+"disp_scan_count")!=null)this.disp_scan_count=Integer.parseInt(properties.getProperty(prefix+"disp_scan_count"));
+  			
+  			if (properties.getProperty(prefix+"fine_corr_x_0")!=null) this.fine_corr_x_0=Double.parseDouble(properties.getProperty(prefix+"fine_corr_x_0"));
+  			if (properties.getProperty(prefix+"fine_corr_y_0")!=null) this.fine_corr_y_0=Double.parseDouble(properties.getProperty(prefix+"fine_corr_y_0"));
+  			if (properties.getProperty(prefix+"fine_corr_x_1")!=null) this.fine_corr_x_1=Double.parseDouble(properties.getProperty(prefix+"fine_corr_x_1"));
+  			if (properties.getProperty(prefix+"fine_corr_y_1")!=null) this.fine_corr_y_1=Double.parseDouble(properties.getProperty(prefix+"fine_corr_y_1"));
+  			if (properties.getProperty(prefix+"fine_corr_x_2")!=null) this.fine_corr_x_2=Double.parseDouble(properties.getProperty(prefix+"fine_corr_x_2"));
+  			if (properties.getProperty(prefix+"fine_corr_y_2")!=null) this.fine_corr_y_2=Double.parseDouble(properties.getProperty(prefix+"fine_corr_y_2"));
+  			if (properties.getProperty(prefix+"fine_corr_x_3")!=null) this.fine_corr_x_3=Double.parseDouble(properties.getProperty(prefix+"fine_corr_x_3"));
+  			if (properties.getProperty(prefix+"fine_corr_y_3")!=null) this.fine_corr_y_3=Double.parseDouble(properties.getProperty(prefix+"fine_corr_y_3"));
+  			
+  			if (properties.getProperty(prefix+"fcorr_min_stength")!=null) this.fcorr_min_stength=Double.parseDouble(properties.getProperty(prefix+"fcorr_min_stength"));
+  			if (properties.getProperty(prefix+"fcorr_disp_diff")!=null)   this.fcorr_disp_diff=Double.parseDouble(properties.getProperty(prefix+"fcorr_disp_diff"));
+  			if (properties.getProperty(prefix+"fcorr_quadratic")!=null)   this.fcorr_quadratic=Boolean.parseBoolean(properties.getProperty(prefix+"fcorr_quadratic"));
+  			if (properties.getProperty(prefix+"fcorr_ignore")!=null)      this.fcorr_ignore=Boolean.parseBoolean(properties.getProperty(prefix+"fcorr_ignore"));
+  			if (properties.getProperty(prefix+"corr_magic_scale")!=null)  this.corr_magic_scale=Double.parseDouble(properties.getProperty(prefix+"corr_magic_scale"));
+
+  			if (properties.getProperty(prefix+"show_textures")!=null)      this.show_textures=Boolean.parseBoolean(properties.getProperty(prefix+"show_textures"));
+  			if (properties.getProperty(prefix+"debug_filters")!=null)      this.debug_filters=Boolean.parseBoolean(properties.getProperty(prefix+"debug_filters"));
+
+  			if (properties.getProperty(prefix+"min_smth")!=null)          this.min_smth=Double.parseDouble(properties.getProperty(prefix+"min_smth"));
+  			if (properties.getProperty(prefix+"sure_smth")!=null)         this.sure_smth=Double.parseDouble(properties.getProperty(prefix+"sure_smth"));
+  			if (properties.getProperty(prefix+"bgnd_range")!=null)        this.bgnd_range=Double.parseDouble(properties.getProperty(prefix+"bgnd_range"));
+  			if (properties.getProperty(prefix+"other_range")!=null)       this.other_range=Double.parseDouble(properties.getProperty(prefix+"other_range"));
+  			if (properties.getProperty(prefix+"bgnd_sure")!=null)         this.bgnd_sure=Double.parseDouble(properties.getProperty(prefix+"bgnd_sure"));
+  			if (properties.getProperty(prefix+"bgnd_maybe")!=null)        this.bgnd_maybe=Double.parseDouble(properties.getProperty(prefix+"bgnd_maybe"));
+  			if (properties.getProperty(prefix+"min_clstr_seed")!=null)    this.min_clstr_seed=Integer.parseInt(properties.getProperty(prefix+"min_clstr_seed"));
+  			if (properties.getProperty(prefix+"min_clstr_lone")!=null)    this.min_clstr_lone=Integer.parseInt(properties.getProperty(prefix+"min_clstr_lone"));
+  			if (properties.getProperty(prefix+"fill_gaps")!=null)          this.fill_gaps=Integer.parseInt(properties.getProperty(prefix+"fill_gaps"));
+  			if (properties.getProperty(prefix+"min_clstr_block")!=null)   this.min_clstr_block=Integer.parseInt(properties.getProperty(prefix+"min_clstr_block"));
+  			if (properties.getProperty(prefix+"bgnd_grow")!=null)         this.bgnd_grow=Integer.parseInt(properties.getProperty(prefix+"bgnd_grow"));
+  			if (properties.getProperty(prefix+"ortho_min_hor")!=null)     this.ortho_min_hor=Double.parseDouble(properties.getProperty(prefix+"ortho_min_hor"));
+  			if (properties.getProperty(prefix+"ortho_min_vert")!=null)    this.ortho_min_vert=Double.parseDouble(properties.getProperty(prefix+"ortho_min_vert"));
+  			if (properties.getProperty(prefix+"ortho_asym")!=null)        this.ortho_asym=Double.parseDouble(properties.getProperty(prefix+"ortho_asym"));
+
+  			if (properties.getProperty(prefix+"ortho_sustain")!=null)     this.ortho_sustain=Double.parseDouble(properties.getProperty(prefix+"ortho_sustain"));
+  			if (properties.getProperty(prefix+"ortho_run")!=null)         this.ortho_run=Integer.parseInt(properties.getProperty(prefix+"ortho_run"));
+  			if (properties.getProperty(prefix+"ortho_minmax")!=null)      this.ortho_minmax=Double.parseDouble(properties.getProperty(prefix+"ortho_minmax"));
+  			if (properties.getProperty(prefix+"ortho_bridge")!=null)      this.ortho_bridge=Integer.parseInt(properties.getProperty(prefix+"ortho_bridge"));
+  			if (properties.getProperty(prefix+"ortho_rms")!=null)         this.ortho_rms=Double.parseDouble(properties.getProperty(prefix+"ortho_rms"));
+  			if (properties.getProperty(prefix+"ortho_half_length")!=null) this.ortho_half_length=Integer.parseInt(properties.getProperty(prefix+"ortho_half_length"));
+  			if (properties.getProperty(prefix+"ortho_mix")!=null)         this.ortho_mix=Double.parseDouble(properties.getProperty(prefix+"ortho_mix"));
+  		}
+  		
+  		public boolean showDialog() {
+  			GenericDialog gd = new GenericDialog("Set CLT parameters");
+  			gd.addNumericField("Transform size (default 8)",                                              this.transform_size,            0);
+  			gd.addNumericField("Lapped transform window type (0- rectangular, 1 - sinus)",                this.clt_window,                0);
+   			gd.addNumericField("shift_x",                                                                 this.shift_x,                   4);
+   			gd.addNumericField("shift_y",                                                                 this.shift_y,                   4);
+  			gd.addNumericField("Bit mask - which of 4 transforms to combine after iclt",                  this.iclt_mask,                 0);
+  			gd.addNumericField("Tile X to extract (0..163)",                                              this.tileX,                     0);
+  			gd.addNumericField("Tile Y to extract (0..122)",                                              this.tileY,                     0);
+  			gd.addNumericField("dbg_mode: 0 - normal, +1 - no DCT/IDCT, just fold",                       this.dbg_mode,                  0);
+  			gd.addNumericField("ishift_x: shift source image by this pixels left",                        this.ishift_x,                  0);
+  			gd.addNumericField("ishift_y: shift source image by this pixels down",                        this.ishift_y,                  0);
+   			gd.addNumericField("Modify phase correlation to prevent division by very small numbers",      this.fat_zero,                  4);
+   			gd.addNumericField("LPF correlarion sigma ",                                                  this.corr_sigma,                3);
+  			gd.addCheckbox    ("Normalize kernels ",                                                      this.norm_kern);
+  			gd.addCheckbox    ("Equalize green channel gain of the individual cnannels",                  this.gain_equalize);
+  			gd.addCheckbox    ("Equalize R/G, B/G balance of the individual channels",                    this.colors_equalize);
+  			gd.addNumericField("Reg gain in the center of sensor calibration R (instead of vignetting)",  this.novignetting_r,   4);
+  			gd.addNumericField("Green gain in the center of sensor calibration G (instead of vignetting)",this.novignetting_g, 4);
+  			gd.addNumericField("Blue gain in the center of sensor calibration B (instead of vignetting)", this.novignetting_b,  4);
+  			gd.addNumericField("Extra red correction to compensate for light temperature",                this.scale_r,  4);
+  			gd.addNumericField("Extra green correction to compensate for light temperature",              this.scale_g,  4);
+  			gd.addNumericField("Extra blue correction to compensate for light temperature",               this.scale_b,  4);
+  			gd.addNumericField("Value (max) in vignetting data to correspond to 1x in the kernel",        this.vignetting_max,      3);
+  			gd.addNumericField("Do not try to correct vignetting smaller than this fraction of max",      this.vignetting_range,  3);
+  			gd.addNumericField("Kernel step in pixels (has 1 kernel margin on each side)",                this.kernel_step,            0);
+  			gd.addNumericField("Nominal (rectilinear) disparity between side of square cameras (pix)",    this.disparity,  3);
+  			gd.addCheckbox    ("Perfcorm coorrelation",                                                   this.correlate);
+  			gd.addNumericField("itmask of pairs to combine in the composite (top, bottom, left,righth)",  this.corr_mask,            0);
+  			gd.addCheckbox    ("Combine correlation with mirrored around disparity direction",            this.corr_sym);
+  			gd.addCheckbox    ("Keep all partial correlations (otherwise - only combined one)",           this.corr_keep);
+  			gd.addCheckbox    ("Show combined correlations",                                              this.corr_show);
+  			gd.addCheckbox    ("Calculate per-pair X/Y variations of measured correlations ",             this.corr_mismatch);
+  			gd.addNumericField("Add to pair correlation before multiplying by other pairs (between sum and product)",    this.corr_offset,  6);
+  			gd.addNumericField("Red to green correlation weight",                                         this.corr_red,  4);
+  			gd.addNumericField("Blue to green correlation weight",                                        this.corr_blue,  4);
+  			gd.addCheckbox    ("Normalize each correlation tile by rms",                                  this.corr_normalize);
+  			gd.addNumericField("Minimal correlation value to consider valid",                             this.min_corr,  6);
+  			gd.addNumericField("Minimal correlation value to consider valid when normalizing results",    this.min_corr_normalized,  6);
+  			gd.addNumericField("Sigma for weights of points around global max to find fractional",        this.max_corr_sigma,  3);
+  			gd.addNumericField("Maximal distance from int max to consider",                               this.max_corr_radius,  3);
+  			
+  			
+  			gd.addMessage("--- Enhance detection of horizontal/vertical features (when enh_ortho is enabled for tile ---");
+  			gd.addNumericField("Reduce weight of center correlation pixels from center (0 - none, 1 - center, 2 +/-1 from center)",  this.enhortho_width,            0);
+  			gd.addNumericField("Multiply center correlation pixels (inside enhortho_width) (1.0 - disables enh_orttho)",  this.enhortho_scale,  3);
+  			
+  			
+  			gd.addCheckbox    ("Double pass when masking center of mass to reduce preference for integer values", this.max_corr_double);
+  			gd.addNumericField("Correlation mode: 0 - integer max, 1 - center of mass, 2 - polynomial",   this.corr_mode,            0);
+  			gd.addNumericField("Contrast of dotted border on correlation results",                        this.corr_border_contrast,  6);
+  			gd.addMessage("--- tiles tasks (current tile_task_op = "+this.tile_task_op+") ---");
+  			gd.addCheckbox    ("Enhace ortho lines detection (enh_ortho)",                                               ImageDtt.getOrthoLines(this.tile_task_op));
+  			gd.addCheckbox    ("Force disparity for image rendering (false - use folund by tile correlation)",           ImageDtt.getForcedDisparity(this.tile_task_op));
+  			gd.addNumericField("Bitmask of used images (1 - top left, 2 - top right, 4 - bottom left, 8 bottom right)",  ImageDtt.getImgMask(this.tile_task_op),            0);
+  			gd.addNumericField("Bitmask of used pairs  (1 - top, 2 - bottom, 4 - left, 8 - right)",                      ImageDtt.getPairMask(this.tile_task_op),            0);
+//  			gd.addNumericField("Tile operations bits: +(0..f) - images, +(00.f0) - process pairs +256, ... ",  this.tile_task_op,            0);
+  			gd.addNumericField("Tile operations window left (in 8x8 tiles)",                              this.tile_task_wl,            0);
+  			gd.addNumericField("Tile operations window top",                                              this.tile_task_wt,            0);
+  			gd.addNumericField("Tile operations window width",                                            this.tile_task_ww,            0);
+  			gd.addNumericField("Tile operations window height",                                           this.tile_task_wh,            0);
+  			
+  			gd.addNumericField("Do not adjust for shot noise (~sqrt) if lower than this",                 this.min_shot,  4);
+  			gd.addNumericField("Scale when dividing by sqrt for shot noise compensation of pixel differences (<0 - disable)", this.scale_shot,  4);
+  			
+  			gd.addNumericField("RMS difference from average to reduce weights (255 full scale image)",    this.diff_sigma,  4);
+  			gd.addNumericField("RMS difference from average in sigmas to discard channel",                this.diff_threshold,  4);
+  			gd.addCheckbox    ("Gaussian as weight when averaging images (false - sharp all/nothing)",    this.diff_gauss);
+  			gd.addNumericField("Minimal number of channels to agree on a point (real number to work with fuzzy averages)",   this.min_agree,  2);
+  			gd.addCheckbox    ("Do not reduce average weight when only one image differes much from the average", this.dust_remove);
+  			gd.addCheckbox    ("Add port weights to RGBA stack (debug feature)",                          this.keep_weights);
+  			gd.addCheckbox    ("Alpha channel: use center 8x8 (unchecked - treat same as RGB)",           this.sharp_alpha);
+  			gd.addNumericField("Alpha channel 0.0 thereshold (lower - transparent)",                      this.alpha0,   3);
+  			gd.addNumericField("Alpha channel 1.0 threshold (higher - opaque)",                           this.alpha1,   3);
+  			gd.addCheckbox    ("Generate shifted channel linear RGB stacks",                              this.gen_chn_stacks);
+  			gd.addCheckbox    ("Generate shifted channel color image stack",                              this.gen_chn_img);
+  			gd.addCheckbox    ("Show result RGBA before overlap combined",                                this.show_nonoverlap);
+  			gd.addCheckbox    ("Show result RGBA",                                                        this.show_overlap);
+  			gd.addCheckbox    ("Show result color",                                                       this.show_rgba_color);
+  			gd.addCheckbox    ("Show disparity maps",                                                     this.show_map);
+  			gd.addNumericField("Disparity scan start value",                                              this.disp_scan_start,  2);
+  			gd.addNumericField("Disparity scan step",                                                     this.disp_scan_step,  2);
+  			gd.addNumericField("Disparity scan number of disparity values to scan",                       this.disp_scan_count,            0);
+
+  			gd.addMessage("--- camera fine correction: X/Y for images 0..3  ---");
+  			gd.addNumericField("X 0",                                                                     this.fine_corr_x_0,  3);
+  			gd.addNumericField("Y 0",                                                                     this.fine_corr_y_0,  3);
+  			gd.addNumericField("X 1",                                                                     this.fine_corr_x_1,  3);
+  			gd.addNumericField("Y 1",                                                                     this.fine_corr_y_1,  3);
+  			gd.addNumericField("X 2",                                                                     this.fine_corr_x_2,  3);
+  			gd.addNumericField("Y 2",                                                                     this.fine_corr_y_2,  3);
+  			gd.addNumericField("X 3",                                                                     this.fine_corr_x_3,  3);
+  			gd.addNumericField("Y 4",                                                                     this.fine_corr_y_3,  3);
+
+  			gd.addNumericField("Minimal correlation strength to apply fine correction",                   this.fcorr_min_stength,  3);
+  			gd.addNumericField("Consider only tiles with absolute residual disparity lower than",         this.fcorr_disp_diff,  3);
+  			gd.addCheckbox    ("Use quadratic polynomial for fine correction (false - only linear)",      this.fcorr_quadratic);
+  			gd.addCheckbox    ("Ignore current calculated fine correction (use manual only)",             this.fcorr_ignore);
+  			gd.addNumericField("Calculated from correlation offset vs. actual one (not yet understood)",  this.corr_magic_scale,  3);
+  			
+  			gd.addMessage     ("--- 3D reconstruction ---");
+  			gd.addCheckbox    ("Show generated textures",                                                      this.show_textures);
+  			gd.addCheckbox    ("show intermediate results of filtering",                                       this.debug_filters);
+
+  			gd.addNumericField("Minimal noise-normalized pixel difference in a channel to suspect something",  this.min_smth,  3);
+  			gd.addNumericField("Reliable noise-normalized pixel difference in a channel to have something ",   this.sure_smth,  3);
+  			gd.addNumericField("Disparity range to be considered background",                                  this.bgnd_range,  3);
+  			gd.addNumericField("Disparity difference from the center (provided) disparity to trust",           this.other_range,  3);
+  			gd.addNumericField("Minimal strength to be considered definitely background",                      this.bgnd_sure,  3);
+  			gd.addNumericField("Maximal strength to ignore as non-background",                                 this.bgnd_maybe,  3);
+
+  			gd.addNumericField("Number of tiles in a cluster to seed (just background?)",                      this.min_clstr_seed,   0);
+  			gd.addNumericField("Number of tiles in a cluster not close to other clusters (more than 2 tiles apart)", this.min_clstr_lone,   0);
+  			gd.addNumericField("Fill gaps betsween clusters, see comments for 'grow'",                         this.fill_gaps,   0);
+  			gd.addNumericField("Number of tiles in a cluster to block (just non-background?)",                 this.min_clstr_block,   0);
+  			gd.addNumericField("Number of tiles to grow tile selection (1 - hor/vert, 2 - hor/vert/diagonal)", this.bgnd_grow,   0);
+
+  			gd.addNumericField("Minimal strength of hor correlation to be used instead of full 4-pair correlation", this.ortho_min_hor,  3);
+  			gd.addNumericField("Minimal strength of vert correlation to be used instead of full 4-pair correlation", this.ortho_min_vert,  3);
+  			gd.addNumericField("Vert/hor (or hor/vert) strength to be used instead of the full correlation",   this.ortho_asym,  3);
+
+  			gd.addNumericField("Minimal strength of hor/vert to bridge over",                                  this.ortho_sustain,  3);
+  			gd.addNumericField("minimal run of hor/vert tiles to be considered (at least from one side)",      this.ortho_run,      0);
+  			gd.addNumericField("Minimal maximal strength in an ortho run (max. in run >=...)",                 this.ortho_minmax,  3);
+  			gd.addNumericField("Number of tiles to bridge over hor/vert gaps",                                 this.ortho_bridge,   0);
+  			gd.addNumericField("Maximal disparity RMS in a run to replace by average)",                        this.ortho_rms,  3);
+  			gd.addNumericField("convolve hor/vert strength by 3*(2*l+1) kernels to detect multi-tile features",this.ortho_half_length,   0);
+  			gd.addNumericField("Fraction ovf convolved ortho in a mix with raw",                              this.ortho_mix,  3);
+
+  			WindowTools.addScrollBars(gd);
+  			gd.showDialog();
+  			
+  			if (gd.wasCanceled()) return false;
+  			this.transform_size=  (int) gd.getNextNumber();
+  			this.clt_window=      (int) gd.getNextNumber();
+  			this.shift_x =              gd.getNextNumber();
+  			this.shift_y =              gd.getNextNumber();
+  			this.iclt_mask=       (int) gd.getNextNumber();
+  			this.tileX=           (int) gd.getNextNumber();
+  			this.tileY=           (int) gd.getNextNumber();
+  			this.dbg_mode=        (int) gd.getNextNumber();
+  			this.ishift_x=        (int) gd.getNextNumber();
+  			this.ishift_y=        (int) gd.getNextNumber();
+  			this.fat_zero =             gd.getNextNumber();
+  			this.corr_sigma =           gd.getNextNumber();
+  			this.norm_kern=             gd.getNextBoolean();
+  			this.gain_equalize=         gd.getNextBoolean();
+  			this.colors_equalize=       gd.getNextBoolean();
+  			this.novignetting_r=        gd.getNextNumber();
+  			this.novignetting_g=        gd.getNextNumber();
+  			this.novignetting_b=        gd.getNextNumber();
+  			this.scale_r=               gd.getNextNumber();
+  			this.scale_g=               gd.getNextNumber();
+  			this.scale_b=               gd.getNextNumber();
+  			this.vignetting_max=        gd.getNextNumber();
+  			this.vignetting_range=      gd.getNextNumber();
+  			this.kernel_step=     (int) gd.getNextNumber();
+  			this.disparity=             gd.getNextNumber();
+  			this.correlate=             gd.getNextBoolean();
+  			this.corr_mask=       (int) gd.getNextNumber();
+  			this.corr_sym=              gd.getNextBoolean();
+  			this.corr_keep=             gd.getNextBoolean();
+  			this.corr_show=             gd.getNextBoolean();
+  			this.corr_mismatch=         gd.getNextBoolean();
+  			this.corr_offset=           gd.getNextNumber();
+  			this.corr_red=              gd.getNextNumber();
+  			this.corr_blue=             gd.getNextNumber();
+  			this.corr_normalize=        gd.getNextBoolean();
+  			this.min_corr=              gd.getNextNumber();
+  			this.min_corr_normalized=   gd.getNextNumber();
+  			this.max_corr_sigma=        gd.getNextNumber();
+  			this.max_corr_radius=       gd.getNextNumber();
+  			
+  			this.enhortho_width= (int) gd.getNextNumber();
+  			this.enhortho_scale=        gd.getNextNumber();
+
+  			this.max_corr_double=       gd.getNextBoolean();
+  			this.corr_mode=       (int) gd.getNextNumber();
+  			this.corr_border_contrast=  gd.getNextNumber();
+  			
+//  			this.tile_task_op=    (int) gd.getNextNumber();
+  			this.tile_task_op = ImageDtt.setOrthoLines      (this.tile_task_op, gd.getNextBoolean());
+  			this.tile_task_op = ImageDtt.setForcedDisparity (this.tile_task_op, gd.getNextBoolean());
+  			this.tile_task_op = ImageDtt.setImgMask         (this.tile_task_op, (int) gd.getNextNumber());
+  			this.tile_task_op = ImageDtt.setPairMask        (this.tile_task_op, (int) gd.getNextNumber());
+  			
+  			this.tile_task_wl=    (int) gd.getNextNumber();
+  			this.tile_task_wt=    (int) gd.getNextNumber();
+  			this.tile_task_ww=    (int) gd.getNextNumber();
+  			this.tile_task_wh=    (int) gd.getNextNumber();
+  			this.min_shot=              gd.getNextNumber();
+  			this.scale_shot=            gd.getNextNumber();
+  			this.diff_sigma=            gd.getNextNumber();
+  			this.diff_threshold=        gd.getNextNumber();
+  			this.diff_gauss=            gd.getNextBoolean();
+  			this.min_agree=             gd.getNextNumber();
+  			this.dust_remove=           gd.getNextBoolean();
+  			this.keep_weights=          gd.getNextBoolean();
+  			this.sharp_alpha=           gd.getNextBoolean();
+  			this.alpha0=                gd.getNextNumber();
+  			this.alpha1=                gd.getNextNumber();
+  			this.gen_chn_stacks=        gd.getNextBoolean();
+  			this.gen_chn_img=           gd.getNextBoolean();
+  			this.show_nonoverlap=       gd.getNextBoolean();
+  			this.show_overlap=          gd.getNextBoolean();
+  			this.show_rgba_color=       gd.getNextBoolean();
+  			this.show_map=              gd.getNextBoolean();
+  			this.disp_scan_start=       gd.getNextNumber();
+  			this.disp_scan_step=        gd.getNextNumber();
+  			this.disp_scan_count= (int) gd.getNextNumber();
+  			
+  			this.fine_corr_x_0=         gd.getNextNumber();
+  			this.fine_corr_y_0=         gd.getNextNumber();
+  			this.fine_corr_x_1=         gd.getNextNumber();
+  			this.fine_corr_y_1=         gd.getNextNumber();
+  			this.fine_corr_x_2=         gd.getNextNumber();
+  			this.fine_corr_y_2=         gd.getNextNumber();
+  			this.fine_corr_x_3=         gd.getNextNumber();
+  			this.fine_corr_y_3=         gd.getNextNumber();
+  			
+  			this.fcorr_min_stength=     gd.getNextNumber();
+  			this.fcorr_disp_diff=       gd.getNextNumber();
+  			this.fcorr_quadratic=       gd.getNextBoolean();
+  			this.fcorr_ignore=          gd.getNextBoolean();
+  			this.corr_magic_scale=      gd.getNextNumber();
+
+  			this.show_textures=         gd.getNextBoolean();
+  			this.debug_filters=         gd.getNextBoolean();
+  			this.min_smth=              gd.getNextNumber();
+  			this.sure_smth=             gd.getNextNumber();
+  			this.bgnd_range=            gd.getNextNumber();
+  			this.other_range=           gd.getNextNumber();
+  			this.bgnd_sure=             gd.getNextNumber();
+  			this.bgnd_maybe=            gd.getNextNumber();
+  			this.min_clstr_seed=  (int) gd.getNextNumber();
+  			this.min_clstr_lone=  (int) gd.getNextNumber();
+  			this.fill_gaps=       (int) gd.getNextNumber();
+  			this.min_clstr_block= (int) gd.getNextNumber();
+  			this.bgnd_grow=       (int) gd.getNextNumber();
+  			this.ortho_min_hor=         gd.getNextNumber();
+  			this.ortho_min_vert=        gd.getNextNumber();
+  			this.ortho_asym=            gd.getNextNumber();
+  			
+  			this.ortho_sustain=         gd.getNextNumber();
+  			this.ortho_run=       (int) gd.getNextNumber();
+  			this.ortho_minmax=          gd.getNextNumber();
+  			this.ortho_bridge=    (int) gd.getNextNumber();
+  			this.ortho_rms=             gd.getNextNumber();
+  			this.ortho_half_length=(int)gd.getNextNumber();
+  			this.ortho_mix=             gd.getNextNumber();
+  			return true;
+  		}
+    }
+
+    public static class DCTParameters {
+  		public int dct_size =            8; //
+  		public int asym_size =          15; //
+  		public int asym_pixels =         4; // maximal number of non-zero pixels in direct convolution kernel
+  		public int asym_distance =       1; // how far to try a new asym kernel pixel from existing ones 
+  		public int dct_window =          1; // currently only 3 types of windows - 0 (none), 1 and 2
+  		public int LMA_steps =         100;
+  		public double fact_precision=    0.003; // stop iterations if error rms less than this part of target kernel rms
+  		public double compactness =      0.0;
+  		public double sym_compactness =  0.5;
+  		public double dc_weight =        1.0;  // importance of dc realtive to rms_pure
+  		public int    asym_tax_free  =   0;    // "compactness" does not apply to pixels with |x|<=asym_tax_free  and |y| <= asym_tax_free
+  		public int    seed_size =        1;    // number of initial cells in asym_kernel - should be 4*b + 1 (X around center cell) or 4*n + 0  (X around between cells)
+  		public double asym_random  =    -1; // initialize asym_kernel with random numbers
+  		public double dbg_x =            2.7;
+  		public double dbg_y =            0.0;
+  		public double dbg_x1 =          -1.3;
+  		public double dbg_y1 =           2.0;
+  		public double dbg_sigma =        0.8;
+  		public double dbg_src_size =     8.0; // trying to slightly scale in dct space. == dct = 1:1, dct+1.0 - shrink dct(dct+1.0)
+  		public double dbg_scale =        1.0; // Should ==DCT_PARAMETERS.dct_size / DCT_PARAMETERS.dbg_src_size
+  		public double dbg_fold_scale =   1.0; // Modifies window during MDCT->DCT-IV folding
+  		public String dbg_mask = ".........:::::::::.........:::::::::......*..:::::*:::.........:::::::::.........";
+  		public int dbg_mode =            1; // 0 - old LMA, 1 - new LMA - *** not used anymore ***
+  		public int dbg_window_mode =     1; // 0 - none, 1 - square, 2 - sin 3 - sin^2 Now _should_ be square !!!
+  		public boolean centerWindowToTarget = true;
+  		// parameters to extract a kernel from the kernel image file
+  		public int    color_channel =    2; // green (<0 - use simulated kernel, also will use simulated if kernels are not set)
+  		public int    decimation =       2; // decimate original kernel this much in each direction
+  		public double decimateSigma =   -1.0; // special mode for 2:1 deciamtion 
+  		public int    tileX =            82;  // number of kernel tile (0..163) 
+  		public int    tileY =            62;  // number of kernel tile (0..122) 
+  		public int    kernel_chn =      -1; // camera channel calibration to use for aberration correction ( < 0 - no correction)
+  		public boolean normalize =       true; // normalize both sym and asym kernels (asym to have sum==1, sym to have sum = dct_size
+  		public boolean normalize_sym =   true; // normalize sym kernels separately
+  		public boolean antiwindow =      false; // divide symmetrical kernel by a window function
+  		public boolean skip_sym =        false; // do not apply symmetrical correction
+  		public boolean convolve_direct = false; // do not apply symmetrical correction
+  		
+  		// colors should be balanced before DCT color conversion!
+  		public double novignetting_r    = 0.2644; // reg gain in the center of sensor calibration R (instead of vignetting)
+  		public double novignetting_g    = 0.3733; // green gain in the center of sensor calibration G
+  		public double novignetting_b    = 0.2034; // blue gain in the center of sensor calibration B
+  		
+  		public double scale_r =           1.0; // extra gain correction after vignetting or nonvignetting, before other processing
+  		public double scale_g =           1.0;
+  		public double scale_b =           1.0;
+  		
+  		public double vignetting_max    = 0.4; // value in vignetting data to correspond to 1x in the kernel
+  		public double vignetting_range  = 5.0; // do not try to correct vignetting less than vignetting_max/vignetting_range
+  		
+  		public boolean post_debayer     = false; // perform de-bayer after aberrations in pixel domain
+  		public boolean color_DCT        = true; // false - use old color processing mode
+  		public double  sigma_rb =         0.9; // additional (to G) blur for R and B
+  		public double  sigma_y =          0.7; // blur for G contribution to Y
+  		public double  sigma_color =      0.7; // blur for Pb and Pr in addition to that of Y
+  		public double  line_thershold =   1.0; // line detection amplitude to apply line enhancement - not used?
+  		public boolean nonlin =           true; // enable nonlinear processing (including denoise
+  		public double  nonlin_max_y =     1.0; // maximal amount of nonlinear line/edge emphasis for Y component
+  		public double  nonlin_max_c =     1.0; // maximal amount of nonlinear line/edge emphasis for C component
+  		public double  nonlin_y =         0.1; // amount of nonlinear line/edge emphasis for Y component
+  		public double  nonlin_c =         0.01; // amount of nonlinear line/edge emphasis for C component
+  		public double  nonlin_corn =      0.5;  // relative weight for nonlinear corner elements
+  		public boolean denoise =          true; // suppress noise during nonlinear processing
+  		public double  denoise_y =        1.0;  // maximal total smoothing of the Y post-kernel (will compete with edge emphasis)
+  		public double  denoise_c =        1.0;  // maximal total smoothing of the color differences post-kernel (will compete with edge emphasis)
+  		public double  denoise_y_corn =   0.3;  // weight of the 4 corner pixels during denoise y (straight - 1-denoise_y_corn)
+  		public double  denoise_c_corn =   0.3;  // weight of the 4 corner pixels during denoise y (straight - 1-denoise_c_corn)
+  		
+
+  		public DCTParameters(){}
+  		
+  		public DCTParameters(
+  				int dct_size,
+  				int asym_size,
+  				int asym_pixels,
+  				int asym_distance,
+  				int dct_window,
+  				double compactness,
+  				int asym_tax_free,
+  				int seed_size) {
+  			this.dct_size =       dct_size;
+  			this.asym_size =      asym_size;
+  			this.asym_pixels =    asym_pixels;
+  			this.asym_distance =  asym_distance;
+  			this.dct_window =     dct_window;
+  			this.compactness =    compactness;
+  			this.asym_tax_free =  asym_tax_free;
+  			this.seed_size =      seed_size;
+  		}
+  		public void setProperties(String prefix,Properties properties){
+  			properties.setProperty(prefix+"dct_size",this.dct_size+"");
+  			properties.setProperty(prefix+"asym_size",this.asym_size+"");
+  			properties.setProperty(prefix+"asym_pixels",this.asym_pixels+"");
+  			properties.setProperty(prefix+"asym_distance",this.asym_distance+"");
+  			properties.setProperty(prefix+"dct_window",   this.dct_window+"");
+  			properties.setProperty(prefix+"compactness",  this.compactness+"");
+  			properties.setProperty(prefix+"sym_compactness",  this.sym_compactness+"");
+  			properties.setProperty(prefix+"dc_weight",  this.dc_weight+"");
+  			properties.setProperty(prefix+"fact_precision",  this.fact_precision+"");
+  			properties.setProperty(prefix+"asym_tax_free",  this.asym_tax_free+"");
+  			properties.setProperty(prefix+"seed_size",  this.seed_size+"");
+  			properties.setProperty(prefix+"asym_random",  this.asym_random+"");
+  			properties.setProperty(prefix+"LMA_steps",  this.LMA_steps+"");
+  			properties.setProperty(prefix+"dbg_x",      this.dbg_x+"");
+  			properties.setProperty(prefix+"dbg_y",      this.dbg_y+"");
+  			properties.setProperty(prefix+"dbg_x1",     this.dbg_x1+"");
+  			properties.setProperty(prefix+"dbg_y1",     this.dbg_y1+"");
+  			properties.setProperty(prefix+"dbg_sigma",  this.dbg_sigma+"");
+  			properties.setProperty(prefix+"dbg_src_size",this.dbg_src_size+"");
+  			properties.setProperty(prefix+"dbg_scale",  this.dbg_scale+"");
+  			properties.setProperty(prefix+"dbg_fold_scale",  this.dbg_fold_scale+"");
+  			properties.setProperty(prefix+"dbg_mask",   this.dbg_mask+"");
+  			properties.setProperty(prefix+"dbg_mode",   this.dbg_mode+"");
+  			properties.setProperty(prefix+"dbg_window_mode",    this.dbg_window_mode+"");
+  			properties.setProperty(prefix+"centerWindowToTarget",   this.centerWindowToTarget+"");
+  			properties.setProperty(prefix+"color_channel",      this.color_channel+"");
+  			properties.setProperty(prefix+"decimation",         this.decimation+"");
+  			properties.setProperty(prefix+"decimateSigma",      this.decimateSigma+"");
+  			properties.setProperty(prefix+"tileX",              this.tileX+"");
+  			properties.setProperty(prefix+"tileY",              this.tileY+"");
+  			properties.setProperty(prefix+"kernel_chn",         this.kernel_chn+"");
+  			properties.setProperty(prefix+"normalize",          this.normalize+"");
+  			properties.setProperty(prefix+"normalize_sym",      this.normalize_sym+"");
+  			properties.setProperty(prefix+"antiwindow",         this.antiwindow+"");
+  			properties.setProperty(prefix+"skip_sym",           this.skip_sym+"");
+  			properties.setProperty(prefix+"convolve_direct",    this.convolve_direct+"");
+  			properties.setProperty(prefix+"novignetting_r",     this.novignetting_r+"");
+  			properties.setProperty(prefix+"novignetting_g",     this.novignetting_g+"");
+  			properties.setProperty(prefix+"novignetting_b",     this.novignetting_b+"");
+  			properties.setProperty(prefix+"scale_r",            this.scale_r+"");
+  			properties.setProperty(prefix+"scale_g",            this.scale_g+"");
+  			properties.setProperty(prefix+"scale_b",            this.scale_b+"");
+  			properties.setProperty(prefix+"vignetting_max",     this.vignetting_max+"");
+  			properties.setProperty(prefix+"vignetting_range",   this.vignetting_range+"");
+  			properties.setProperty(prefix+"post_debayer",       this.post_debayer+"");
+  			properties.setProperty(prefix+"color_DCT",          this.color_DCT+"");
+  			properties.setProperty(prefix+"sigma_rb",           this.sigma_rb+"");
+  			properties.setProperty(prefix+"sigma_y",            this.sigma_y+"");
+  			properties.setProperty(prefix+"sigma_color",        this.sigma_color+"");
+  			properties.setProperty(prefix+"line_thershold",     this.line_thershold+"");
+  			properties.setProperty(prefix+"nonlin",             this.nonlin+"");
+  			properties.setProperty(prefix+"nonlin_max_y",       this.nonlin_max_y+"");
+  			properties.setProperty(prefix+"nonlin_max_c",       this.nonlin_max_c+"");
+  			properties.setProperty(prefix+"nonlin_y",           this.nonlin_y+"");
+  			properties.setProperty(prefix+"nonlin_c",           this.nonlin_c+"");
+  			properties.setProperty(prefix+"nonlin_corn",        this.nonlin_corn+"");
+  			properties.setProperty(prefix+"denoise",            this.denoise+"");
+  			properties.setProperty(prefix+"denoise_y",          this.denoise_y+"");
+  			properties.setProperty(prefix+"denoise_c",          this.denoise_c+"");
+  			properties.setProperty(prefix+"denoise_y_corn",     this.denoise_y_corn+"");
+  			properties.setProperty(prefix+"denoise_c_corn",     this.denoise_c_corn+"");
+  			
+  			
+  			
+  		}
+  		public void getProperties(String prefix,Properties properties){
+  			if (properties.getProperty(prefix+"dct_size")!=null) this.dct_size=Integer.parseInt(properties.getProperty(prefix+"dct_size"));
+  			if (properties.getProperty(prefix+"asym_size")!=null) this.asym_size=Integer.parseInt(properties.getProperty(prefix+"asym_size"));
+  			if (properties.getProperty(prefix+"asym_pixels")!=null) this.asym_pixels=Integer.parseInt(properties.getProperty(prefix+"asym_pixels"));
+  			if (properties.getProperty(prefix+"asym_distance")!=null) this.asym_distance=Integer.parseInt(properties.getProperty(prefix+"asym_distance"));
+  			if (properties.getProperty(prefix+"dct_window")!=null) this.dct_window=Integer.parseInt(properties.getProperty(prefix+"dct_window"));
+  			if (properties.getProperty(prefix+"compactness")!=null) this.compactness=Double.parseDouble(properties.getProperty(prefix+"compactness"));
+  			if (properties.getProperty(prefix+"sym_compactness")!=null) this.sym_compactness=Double.parseDouble(properties.getProperty(prefix+"sym_compactness"));
+  			if (properties.getProperty(prefix+"dc_weight")!=null) this.dc_weight=Double.parseDouble(properties.getProperty(prefix+"dc_weight"));
+  			if (properties.getProperty(prefix+"fact_precision")!=null) this.fact_precision=Double.parseDouble(properties.getProperty(prefix+"fact_precision"));
+  			if (properties.getProperty(prefix+"asym_tax_free")!=null) this.asym_tax_free=Integer.parseInt(properties.getProperty(prefix+"asym_tax_free"));
+  			if (properties.getProperty(prefix+"seed_size")!=null) this.seed_size=Integer.parseInt(properties.getProperty(prefix+"seed_size"));
+  			if (properties.getProperty(prefix+"asym_random")!=null) this.asym_random=Double.parseDouble(properties.getProperty(prefix+"asym_random"));
+  			if (properties.getProperty(prefix+"LMA_steps")!=null) this.LMA_steps=Integer.parseInt(properties.getProperty(prefix+"LMA_steps"));
+  			if (properties.getProperty(prefix+"dbg_x")!=null) this.dbg_x=Double.parseDouble(properties.getProperty(prefix+"dbg_x"));
+  			if (properties.getProperty(prefix+"dbg_y")!=null) this.dbg_y=Double.parseDouble(properties.getProperty(prefix+"dbg_y"));
+  			if (properties.getProperty(prefix+"dbg_x1")!=null) this.dbg_x1=Double.parseDouble(properties.getProperty(prefix+"dbg_x1"));
+  			if (properties.getProperty(prefix+"dbg_y1")!=null) this.dbg_y1=Double.parseDouble(properties.getProperty(prefix+"dbg_y1"));
+  			if (properties.getProperty(prefix+"dbg_sigma")!=null) this.dbg_sigma=Double.parseDouble(properties.getProperty(prefix+"dbg_sigma"));
+  			if (properties.getProperty(prefix+"dbg_src_size")!=null) this.dbg_src_size=Double.parseDouble(properties.getProperty(prefix+"dbg_src_size"));
+  			if (properties.getProperty(prefix+"dbg_scale")!=null) this.dbg_scale=Double.parseDouble(properties.getProperty(prefix+"dbg_scale"));
+  			if (properties.getProperty(prefix+"dbg_fold_scale")!=null) this.dbg_fold_scale=Double.parseDouble(properties.getProperty(prefix+"dbg_fold_scale"));
+  			if (properties.getProperty(prefix+"dbg_mask")!=null) this.dbg_mask=properties.getProperty(prefix+"dbg_mask");
+  			if (properties.getProperty(prefix+"dbg_mode")!=null) this.dbg_mode=Integer.parseInt(properties.getProperty(prefix+"dbg_mode"));
+  			if (properties.getProperty(prefix+"centerWindowToTarget")!=null) this.centerWindowToTarget=Boolean.parseBoolean(properties.getProperty(prefix+"centerWindowToTarget"));
+  			if (properties.getProperty(prefix+"color_channel")!=null) this.color_channel=Integer.parseInt(properties.getProperty(prefix+"color_channel"));
+  			if (properties.getProperty(prefix+"decimation")!=null) this.decimation=Integer.parseInt(properties.getProperty(prefix+"decimation"));
+  			if (properties.getProperty(prefix+"decimateSigma")!=null) this.decimateSigma=Double.parseDouble(properties.getProperty(prefix+"decimateSigma"));
+  			if (properties.getProperty(prefix+"tileX")!=null) this.tileX=Integer.parseInt(properties.getProperty(prefix+"tileX"));
+  			if (properties.getProperty(prefix+"tileY")!=null) this.tileY=Integer.parseInt(properties.getProperty(prefix+"tileY"));
+  			if (properties.getProperty(prefix+"dbg_window_mode")!=null) this.dbg_window_mode=Integer.parseInt(properties.getProperty(prefix+"dbg_window_mode"));
+  			if (properties.getProperty(prefix+"kernel_chn")!=null) this.kernel_chn=Integer.parseInt(properties.getProperty(prefix+"kernel_chn"));
+  			if (properties.getProperty(prefix+"normalize")!=null) this.normalize=Boolean.parseBoolean(properties.getProperty(prefix+"normalize"));
+  			if (properties.getProperty(prefix+"normalize_sym")!=null) this.normalize_sym=Boolean.parseBoolean(properties.getProperty(prefix+"normalize_sym"));
+  			if (properties.getProperty(prefix+"antiwindow")!=null) this.antiwindow=Boolean.parseBoolean(properties.getProperty(prefix+"antiwindow"));
+  			if (properties.getProperty(prefix+"skip_sym")!=null) this.skip_sym=Boolean.parseBoolean(properties.getProperty(prefix+"skip_sym"));
+  			if (properties.getProperty(prefix+"convolve_direct")!=null) this.convolve_direct=Boolean.parseBoolean(properties.getProperty(prefix+"convolve_direct"));
+  			if (properties.getProperty(prefix+"novignetting_r")!=null) this.novignetting_r=Double.parseDouble(properties.getProperty(prefix+"novignetting_r"));
+  			if (properties.getProperty(prefix+"novignetting_g")!=null) this.novignetting_g=Double.parseDouble(properties.getProperty(prefix+"novignetting_g"));
+  			if (properties.getProperty(prefix+"novignetting_b")!=null) this.novignetting_b=Double.parseDouble(properties.getProperty(prefix+"novignetting_b"));
+  			if (properties.getProperty(prefix+"scale_r")!=null)        this.scale_r=Double.parseDouble(properties.getProperty(prefix+"scale_r"));
+  			if (properties.getProperty(prefix+"scale_g")!=null)        this.scale_g=Double.parseDouble(properties.getProperty(prefix+"scale_g"));
+  			if (properties.getProperty(prefix+"scale_b")!=null)        this.scale_b=Double.parseDouble(properties.getProperty(prefix+"scale_b"));
+  			if (properties.getProperty(prefix+"vignetting_max")!=null) this.vignetting_max=Double.parseDouble(properties.getProperty(prefix+"vignetting_max"));
+  			if (properties.getProperty(prefix+"vignetting_range")!=null) this.vignetting_range=Double.parseDouble(properties.getProperty(prefix+"vignetting_range"));
+  			if (properties.getProperty(prefix+"post_debayer")!=null)   this.post_debayer=Boolean.parseBoolean(properties.getProperty(prefix+"post_debayer"));
+  			if (properties.getProperty(prefix+"color_DCT")!=null)      this.color_DCT=Boolean.parseBoolean(properties.getProperty(prefix+"color_DCT"));
+  			if (properties.getProperty(prefix+"sigma_rb")!=null)       this.sigma_rb=Double.parseDouble(properties.getProperty(prefix+"sigma_rb"));
+  			if (properties.getProperty(prefix+"sigma_y")!=null)        this.sigma_y=Double.parseDouble(properties.getProperty(prefix+"sigma_y"));
+  			if (properties.getProperty(prefix+"sigma_color")!=null)    this.sigma_color=Double.parseDouble(properties.getProperty(prefix+"sigma_color"));
+  			if (properties.getProperty(prefix+"line_thershold")!=null) this.line_thershold=Double.parseDouble(properties.getProperty(prefix+"line_thershold"));
+  			if (properties.getProperty(prefix+"nonlin")!=null)         this.nonlin=Boolean.parseBoolean(properties.getProperty(prefix+"nonlin"));
+  			if (properties.getProperty(prefix+"nonlin_max_y")!=null)   this.nonlin_max_y=Double.parseDouble(properties.getProperty(prefix+"nonlin_max_y"));
+  			if (properties.getProperty(prefix+"nonlin_max_c")!=null)   this.nonlin_max_c=Double.parseDouble(properties.getProperty(prefix+"nonlin_max_c"));
+  			if (properties.getProperty(prefix+"nonlin_y")!=null)       this.nonlin_y=Double.parseDouble(properties.getProperty(prefix+"nonlin_y"));
+  			if (properties.getProperty(prefix+"nonlin_c")!=null)       this.nonlin_c=Double.parseDouble(properties.getProperty(prefix+"nonlin_c"));
+  			if (properties.getProperty(prefix+"nonlin_corn")!=null)    this.nonlin_corn=Double.parseDouble(properties.getProperty(prefix+"nonlin_corn"));
+  			if (properties.getProperty(prefix+"denoise")!=null)        this.denoise=Boolean.parseBoolean(properties.getProperty(prefix+"denoise"));
+  			if (properties.getProperty(prefix+"denoise_y")!=null)      this.denoise_y=Double.parseDouble(properties.getProperty(prefix+"denoise_y"));
+  			if (properties.getProperty(prefix+"denoise_c")!=null)      this.denoise_c=Double.parseDouble(properties.getProperty(prefix+"denoise_c"));
+  			if (properties.getProperty(prefix+"denoise_y_corn")!=null) this.denoise_y_corn=Double.parseDouble(properties.getProperty(prefix+"denoise_y_corn"));
+  			if (properties.getProperty(prefix+"denoise_c_corn")!=null) this.denoise_c_corn=Double.parseDouble(properties.getProperty(prefix+"denoise_c_corn"));
+  			
+  		}
+  		public boolean showDialog() {
+  			GenericDialog gd = new GenericDialog("Set DCT parameters");
+  			gd.addNumericField("DCT size",                                                       this.dct_size,            0);
+  			gd.addNumericField("Size of asymmetrical (non-DCT) kernel",                          this.asym_size,           0);
+  			gd.addNumericField("Maximal number of non-zero pixels in direct convolution kernel", this.asym_pixels,         0);
+  			gd.addNumericField("How far to try a new asym kernel pixel from existing ones",      this.asym_distance,       0);
+  			gd.addNumericField("MDCT window type (0,1,2)",                                       this.dct_window,          0);
+  			gd.addNumericField("LMA_steps",                                                      this.LMA_steps,           0);
+  			gd.addNumericField("Compactness (punish off-center asym_kernel pixels (proportional to r^2)", this.compactness,2);
+  			gd.addNumericField("Symmetrical kernel compactness (proportional to r^2)",           this.sym_compactness,     2);
+  			gd.addNumericField("Relative importance of DC error to RMS",                         this.dc_weight,           2);
+  			gd.addNumericField("Factorization target precision (stop if achieved)",              this.fact_precision,      4);
+  			gd.addNumericField("Do not punish pixels in the square around center",               this.asym_tax_free,       0);
+  			gd.addNumericField("Start asym_kernel with this number of pixels (0 - single, 4n+0 (X between cells), 4*n+1 - x around center cell",               this.seed_size,     0); //0..2
+  			gd.addNumericField("Initialize asym_kernel with random numbers (amplitude)",         this.asym_random,         2);
+  			gd.addNumericField("dbg_x",                                                          this.dbg_x,               2);
+  			gd.addNumericField("dbg_y",                                                          this.dbg_y,               2);
+  			gd.addNumericField("dbg_x1",                                                         this.dbg_x1,              2);
+  			gd.addNumericField("dbg_y1",                                                         this.dbg_y1,              2);
+  			gd.addNumericField("dbg_sigma",                                                      this.dbg_sigma,           3);
+  			gd.addNumericField("== dct_size = 1:1, dct+1.0 - shrink dct(dct+1.0)",               this.dbg_src_size,        3);
+  			gd.addNumericField("Should ==DCT_PARAMETERS.dct_size / DCT_PARAMETERS.dbg_src_size", this.dbg_scale,           3);
+  			gd.addNumericField("Modifies window during MDCT->DCT-IV folding",                    this.dbg_fold_scale,      3);
+  			gd.addStringField ("Debug mask (anything but * is false)",                           this.dbg_mask,          100);
+  			gd.addNumericField("LMA implementation: 0 - old, 1 - new",                           this.dbg_mode,            0);
+  			gd.addNumericField("Convolution window: 0 - none, [1 - square], 2 - sin, 3 - sin^2", this.dbg_window_mode,     0);
+  			gd.addCheckbox    ("Center convolution window around target kernel center",          this.centerWindowToTarget);
+  			gd.addNumericField("Color channel to extract kernel (<0 - use synthetic)",           this.color_channel,       0);
+  			gd.addNumericField("Convolution kernel decimation (original is normally 2x)",        this.decimation,          0);
+  			gd.addNumericField("Smooth convolution kernel before decimation",                    this.decimateSigma,       3);
+  			gd.addNumericField("Tile X to extract (0..163)",                                     this.tileX,               0);
+  			gd.addNumericField("Tile Y to extract (0..122)",                                     this.tileY,               0);
+  			gd.addNumericField("Calibration channel to use for aberration ( <0 - no correction)",this.kernel_chn,          0);
+  			gd.addCheckbox    ("Normalize both sym and asym kernels ",                           this.normalize);
+  			gd.addCheckbox    ("Normalize sym kernels separately",                               this.normalize_sym);
+  			gd.addCheckbox    ("Divide symmetrical kernel by a window function",                 this.antiwindow);
+  			gd.addCheckbox    ("Do not apply symmetrical (DCT) correction ",                     this.skip_sym);
+  			gd.addCheckbox    ("Convolve directly with symmetrical kernel (debug feature) ",     this.convolve_direct);
+  			gd.addNumericField("Reg gain in the center of sensor calibration R (instead of vignetting)",this.novignetting_r,   4);
+  			gd.addNumericField("Green gain in the center of sensor calibration G (instead of vignetting)",this.novignetting_g, 4);
+  			gd.addNumericField("Blue gain in the center of sensor calibration B (instead of vignetting)",this.novignetting_b,  4);
+  			gd.addNumericField("Extra red correction to compensate for light temperature",               this.scale_r,  4);
+  			gd.addNumericField("Extra green correction to compensate for light temperature",             this.scale_g,  4);
+  			gd.addNumericField("Extra blue correction to compensate for light temperature",              this.scale_b,  4);
+  			gd.addNumericField("Value (max) in vignetting data to correspond to 1x in the kernel",    this.vignetting_max,      3);
+  			gd.addNumericField("Do not try to correct vignetting smaller than this fraction of max",  this.vignetting_range,  3);
+  			gd.addCheckbox    ("Perform de-bayer after aberrations in pixel domain",              this.post_debayer             );
+  			gd.addCheckbox    ("Use DCT-based color conversion (false - just LPF RGB with dbg_sigma)",this.color_DCT             );
+  			gd.addNumericField("Gaussian sigma to apply to R and B (in addition to G), pix",      this.sigma_rb,            3);
+  			gd.addNumericField("Gaussian sigma to apply to Y in the MDCT domain, pix",            this.sigma_y,             3);
+  			gd.addNumericField("Gaussian sigma to apply to Pr and Pb in the MDCT domain, pix",    this.sigma_color,         3);
+  			gd.addNumericField("Threshold for line detection (not yet used)",                     this.line_thershold,      3);
+
+  			gd.addCheckbox    ("Use non-linear line emphasis and denoise",                        this.nonlin             );
+  			gd.addNumericField("Maximal amount of non-linear emphasis for linear edges for Y component",  this.nonlin_max_y,3);
+  			gd.addNumericField("Maximal amount of non-linear emphasis for linear edges for color diffs.", this.nonlin_max_c,3);
+  			gd.addNumericField("Sensitivity of non-linear emphasis for linear edges for Y component",  this.nonlin_y,       3);
+  			gd.addNumericField("Sensitivity of non-linear emphasis for linear edges for color diffs.", this.nonlin_c,       3);
+  			gd.addNumericField("Corretion for diagonal/corner emphasis elements",                 this.nonlin_corn,         3);
+  			gd.addCheckbox    ("Suppress noise during nonlinear processing",                      this.denoise             );
+  			gd.addNumericField("Maximal total smoothing of the Y post-kernel (will compete with edge emphasis)",  this.denoise_y,3);
+  			gd.addNumericField("Maximal total smoothing of the color differences post-kernel (will compete with edge emphasis)",  this.denoise_c,3);
+  			gd.addNumericField("Weight of the 4 corner pixels during denoising y (straight - 1.0-denoise_y_corn)",  this.denoise_y_corn,3);
+  			gd.addNumericField("Weight of the 4 corner pixels during denoising color ((straight - 1.0-denoise_c_corn))",  this.denoise_c_corn,3);
+  			
+  			WindowTools.addScrollBars(gd);
+  			gd.showDialog();
+  			
+  			if (gd.wasCanceled()) return false;
+  			this.dct_size=        (int) gd.getNextNumber();
+  			this.asym_size=       (int) gd.getNextNumber();
+  			this.asym_pixels=     (int) gd.getNextNumber();
+  			this.asym_distance=   (int) gd.getNextNumber();
+  			this.dct_window=      (int) gd.getNextNumber();
+  			this.LMA_steps =      (int) gd.getNextNumber();
+  			this.compactness =          gd.getNextNumber();
+  			this.sym_compactness =      gd.getNextNumber();
+  			this.dc_weight =            gd.getNextNumber();
+  			this.fact_precision =       gd.getNextNumber();
+  			this.asym_tax_free =  (int) gd.getNextNumber();
+  			this.seed_size =      (int) gd.getNextNumber();
+  			this.asym_random=           gd.getNextNumber();
+  			this.dbg_x=                 gd.getNextNumber();
+  			this.dbg_y=                 gd.getNextNumber();
+  			this.dbg_x1=                gd.getNextNumber();
+  			this.dbg_y1=                gd.getNextNumber();
+  			this.dbg_sigma=             gd.getNextNumber();
+  			this.dbg_src_size=          gd.getNextNumber();
+  			this.dbg_scale=             gd.getNextNumber();
+  			this.dbg_fold_scale=        gd.getNextNumber();
+  			this.dbg_mask=              gd.getNextString();
+  			this.dbg_mode=        (int) gd.getNextNumber();
+  			this.dbg_window_mode= (int) gd.getNextNumber();
+  			this.centerWindowToTarget=  gd.getNextBoolean();
+  			this.color_channel=   (int) gd.getNextNumber();
+  			this.decimation=      (int) gd.getNextNumber();
+  			this.decimateSigma=         gd.getNextNumber();
+  			this.tileX=           (int) gd.getNextNumber();
+  			this.tileY=           (int) gd.getNextNumber();
+  			this.kernel_chn=      (int) gd.getNextNumber();
+  			this.normalize=             gd.getNextBoolean();
+  			this.normalize_sym=         gd.getNextBoolean();
+  			this.antiwindow=            gd.getNextBoolean();
+  			this.skip_sym=              gd.getNextBoolean();
+  			this.convolve_direct=       gd.getNextBoolean();
+
+  			this.novignetting_r=        gd.getNextNumber();
+  			this.novignetting_g=        gd.getNextNumber();
+  			this.novignetting_b=        gd.getNextNumber();
+  			this.scale_r=               gd.getNextNumber();
+  			this.scale_g=               gd.getNextNumber();
+  			this.scale_b=               gd.getNextNumber();
+  			this.vignetting_max=        gd.getNextNumber();
+  			this.vignetting_range=      gd.getNextNumber();
+
+  			this.post_debayer=          gd.getNextBoolean();
+  			this.color_DCT=             gd.getNextBoolean();
+  			this.sigma_rb=              gd.getNextNumber();
+  			this.sigma_y=               gd.getNextNumber();
+  			this.sigma_color=           gd.getNextNumber();
+  			this.line_thershold=        gd.getNextNumber();
+  			
+  			this.nonlin=             gd.getNextBoolean();
+  			this.nonlin_max_y=          gd.getNextNumber();
+  			this.nonlin_max_c=          gd.getNextNumber();
+  			this.nonlin_y=              gd.getNextNumber();
+  			this.nonlin_c=              gd.getNextNumber();
+  			this.nonlin_corn=           gd.getNextNumber();
+  			
+  			this.denoise=             gd.getNextBoolean();
+  			this.denoise_y=          gd.getNextNumber();
+  			this.denoise_c=          gd.getNextNumber();
+  			this.denoise_y_corn=          gd.getNextNumber();
+  			this.denoise_c_corn=          gd.getNextNumber();
+  			
+  			//  	    MASTER_DEBUG_LEVEL= (int) gd.getNextNumber();
+  			return true;
+  		}  
+  	}
+
+    
+    /* ======================================================================== */
     public static class DebayerParameters {
   		public int size;
   		public double polarStep;

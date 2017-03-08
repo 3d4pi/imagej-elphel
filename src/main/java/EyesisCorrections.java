@@ -39,6 +39,8 @@ import ij.process.ImageProcessor;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.swing.SwingUtilities;
+
 import loci.common.services.DependencyException;
 import loci.common.services.ServiceException;
 import loci.formats.FormatException;
@@ -101,19 +103,10 @@ public class EyesisCorrections {
 			System.out.println ("Number of used channels: "+numUsedChannels+" ("+sChannels+" )");
 		}
 		createChannelVignetting();
-		
-		if ((this.debugLevel>1) && (correctionsParameters.sourcePaths!=null) && (correctionsParameters.sourcePaths.length>0)) {
+		//java.lang.ClassCastException: [B cannot be cast to [F
+		//if ((this.debugLevel>1) && (correctionsParameters.sourcePaths!=null) && (correctionsParameters.sourcePaths.length>0)) {
+		if ((this.debugLevel>101) && (correctionsParameters.sourcePaths!=null) && (correctionsParameters.sourcePaths.length>0)) {
 			testFF(correctionsParameters.sourcePaths[0]);
-//			this.channelVignettingCorrection[srcChannel]=this.pixelMapping.getBayerFlatFieldFloat(
-/*			
-			SDFA_INSTANCE.showArrays(
-					this.channelVignettingCorrection,
-					this.channelWidthHeight[srcChannel][0],
-					this.channelWidthHeight[srcChannel][1],
-					true,
-					"Flat-Field");
-					//LENS_DISTORTIONS.displayGridTitles());
-*/
 		}
 		
 	}
@@ -1292,7 +1285,8 @@ public class EyesisCorrections {
 					  title+"-RGB24",
 					  0, 65536, // r range 0->0, 65536->256
 					  0, 65536, // g range
-					  0, 65536);// b range
+					  0, 65536,// b range
+					  0, 65536);// alpha range
 			  if (JPEG_scale!=1.0){
 				  ImageProcessor ip=imp_RGB.getProcessor();
 				  ip.setInterpolationMethod(ImageProcessor.BICUBIC);
@@ -1387,7 +1381,8 @@ public class EyesisCorrections {
 	 /* ======================================================================== */
 	  
 	  
-	  private boolean fixSliceSequence (
+//	  private boolean fixSliceSequence (
+	public boolean fixSliceSequence ( // for EyesisDCT
 			  ImageStack stack,
 			  int debugLevel){
 		  int i,j;
@@ -1403,7 +1398,7 @@ public class EyesisCorrections {
 				  break;
 			  }
 		  }
-		  if (debugLevel>2) {
+		  if (debugLevel > 2) {
 			  System.out.println ( "Input file color slice numbers:");
 			  System.out.println ( "  Red -   slice "+((rgbNumbers[0]>0)?rgbNumbers[0]:"missing"));
 			  System.out.println ( "  Green - slice "+((rgbNumbers[1]>0)?rgbNumbers[1]:"missing"));
@@ -1530,7 +1525,6 @@ public class EyesisCorrections {
 
 	/* ======================================================================== */
 	  public CompositeImage convertToComposite( ImagePlus imp) {
-//		  if (imp.isComposite()) return imp;
 		  if (imp.isComposite()) return null;
 		  if (imp.getNChannels()>1) {
 			  return null; // number of channels should be just 1
@@ -1538,8 +1532,6 @@ public class EyesisCorrections {
 		  int c = imp.getStackSize();
 		  imp.setDimensions(c, 1, 1);
 		  CompositeImage ci = new CompositeImage(imp, CompositeImage.COMPOSITE);
-//		  ci.show();
-//		  imp.hide();
 		  return ci;
 	  }
 
@@ -1552,19 +1544,21 @@ public class EyesisCorrections {
 		  int i,j;
 		  float [] fpixels;
 		  short [] spixels;
-		  double [] mins= {rgbParameters.r_min,rgbParameters.g_min,rgbParameters.b_min};
-		  double [] maxs= {rgbParameters.r_max,rgbParameters.g_max,rgbParameters.b_max};
-		  if (stack32.getSize()<3) return null;
+		  int numSlices  = stack32.getSize();
+		  if (numSlices > 4) numSlices = 4;
+		  if (numSlices < 3) return null;
+		  double [] mins= {rgbParameters.r_min, rgbParameters.g_min, rgbParameters.b_min, rgbParameters.alpha_min};
+		  double [] maxs= {rgbParameters.r_max, rgbParameters.g_max, rgbParameters.b_max, rgbParameters.alpha_max};
 		  double value;
 		  double scale;
-		  for (i=0;i<3;i++) {
-			 fpixels= (float[])stack32.getPixels(i+1);
-			 scale=65535.0/(maxs[i]-mins[i]);
+		  for (i = 0; i < numSlices; i++) {
+			 fpixels= (float[])stack32.getPixels(i + 1);
+			 scale=65535.0 / (maxs[i] - mins[i]);
 			 spixels=new short [length];
-			 for (j=0;j<length;j++) {
+			 for (j = 0; j < length; j++) {
 				 value=(fpixels[j]-mins[i])*scale;
-				 if      (value<0.0) value=0.0;
-				 else if (value>65535.0) value=65535.0;
+				 if      (value<0.0)     value = 0.0;
+				 else if (value>65535.0) value = 65535.0;
 				 spixels[j]=(short)(value+0.5);
 			 }
 			 stack16.addSlice(stack32.getSliceLabel(i+1), spixels);
@@ -1581,26 +1575,35 @@ public class EyesisCorrections {
 			  int g_min,
 			  int g_max,
 			  int b_min,
-			  int b_max){
-		  int [] mins= {r_min,g_min,b_min};
-		  int [] maxs= {r_max,g_max,b_max};
+			  int b_max,
+			  int alpha_min,
+			  int alpha_max){
+		  int [] mins= {r_min,g_min,b_min,alpha_min};
+		  int [] maxs= {r_max,g_max,b_max,alpha_max};
 	      int i;
 		  int length=stack16.getWidth()*stack16.getHeight();
-		  short [][] spixels=new short[3][];
+		  int numSlices  = stack16.getSize();
+		  if (numSlices > 4) numSlices = 4;
+		  short [][] spixels=new short[numSlices][];
+		  int [] sliceSeq = new int [numSlices];
+		  for (int j = 0; j < numSlices; j++) sliceSeq[j] = (j + ((numSlices > 3)? 3:0)) % 4; 
+		  
 		  int [] pixels=new int[length];
 		  int c,d;
-		  double [] scale=new double[3];
-		  for (c=0;c<3;c++) {
+		  
+		  double [] scale=new double[numSlices];
+		  for (c = 0; c < numSlices; c++) {
 			  scale[c]=256.0/(maxs[c]-mins[c]);
 		  }
-		  for (i=0;i<3;i++) spixels[i]= (short[])stack16.getPixels(i+1);
-		  for (i=0;i<length;i++) {
+		  for (i = 0; i < numSlices; i++) spixels[i]= (short[])stack16.getPixels(i+1);
+		  for (i = 0; i < length; i++) {
 			  pixels[i]=0;
-			  for (c=0;c<3;c++) {
+			  for (int j=0; j < numSlices; j++) {
+				  c = sliceSeq[j];
 				  d=(int)(((spixels[c][i]& 0xffff)-mins[c])*scale[c]);
-				  if (d>255) d=255;
-				  else if (d<0) d=0;
-				  pixels[i]= d | (pixels[i]<<8);
+				  if (d > 255) d=255;
+				  else if (d < 0) d=0;
+				  pixels[i]= d | (pixels[i] << 8);
 			  }
 		  }
 		  ColorProcessor cp=new ColorProcessor(stack16.getWidth(),stack16.getHeight());
@@ -1608,7 +1611,48 @@ public class EyesisCorrections {
 		  ImagePlus imp=new ImagePlus(title,cp);
 		  return imp;
 	  }
-	
+
+	  public ImageStack convertRGB48toRGBA24Stack(
+			  ImageStack stack16,
+			  double [] dalpha, // alpha pixel array 0..1.0 or null 
+//			  String title,
+			  int r_min,
+			  int r_max,
+			  int g_min,
+			  int g_max,
+			  int b_min,
+			  int b_max){
+		  ImageStack stack8 = new ImageStack(stack16.getWidth(), stack16.getHeight());
+		  int [] mins= {r_min,g_min,b_min};
+		  int [] maxs= {r_max,g_max,b_max};
+	      int i;
+		  int length=stack16.getWidth()*stack16.getHeight();
+		  short [][] spixels=new short[3][];
+		  byte [][] bpixels=new byte [(dalpha != null)? 4: 3][length];
+		  int c,d;
+		  double [] scale=new double[3];
+		  for (c=0;c<3;c++) {
+			  scale[c]=256.0/(maxs[c]-mins[c]);
+		  }
+		  for (i = 0; i <3; i++) spixels[i]= (short[])stack16.getPixels(i+1);
+		  for (c = 0; c <3; c++) {
+			  for (i = 0; i < length; i++){
+				  d=(int)(((spixels[c][i]& 0xffff)-mins[c])*scale[c]);
+				  if (d>255) d=255;
+				  else if (d<0) d=0;
+				  bpixels[c][i]= (byte) d;
+			  }
+			  stack8.addSlice(stack16.getSliceLabel(c+1), bpixels[c]);
+		  }
+		  if (dalpha != null) {
+			  for (i = 0; i < length; i++){
+				  bpixels[3][i] = (byte) (255*dalpha[i]);
+			  }
+			  stack8.addSlice("alpha", bpixels[3]);
+		  }
+		  return stack8;
+	  }
+	  
 	/* ======================================================================== */
 	  public ImagePlus Image32toGreyRGB24(
 			  ImagePlus imp){
@@ -1711,92 +1755,153 @@ public class EyesisCorrections {
 		  final AtomicInteger ai = new AtomicInteger(0);
 		  final int numberOfKernels=     tilesY*tilesX*nChn;
 		  final int numberOfKernelsInChn=tilesY*tilesX;
+		  
+		  int ichn,indx,dx,dy,tx,ty,li;
+		  final int [] nonOverlapSeq = new int[numberOfKernels];
+		  int [] nextFirstFindex=new int[16*nChn];
+		  indx = 0;
+		  li=0;
+		  for (ichn=0;ichn<nChn;ichn++) for (dy=0;dy<4;dy++) for (dx=0;dx<4;dx++) {
+			  for (ty=dy; ty < tilesY; ty+=4) for (tx=dx; tx < tilesX; tx+=4){
+				  nonOverlapSeq[indx++] = ichn*numberOfKernelsInChn+ ty*tilesX + tx;
+			  }
+			  nextFirstFindex[li++] = indx;
+		  }
+		  final AtomicInteger aStopIndex = new AtomicInteger(0);
+		  final AtomicInteger tilesFinishedAtomic = new AtomicInteger(1); // first finished will be 1
+		  
+		  if (globalDebugLevel>1) 
+			  System.out.println("Eyesis_Corrections:convolveStackWithKernelStack :\n"+
+				  "globalDebugLevel="+globalDebugLevel+"\n"+
+				  "imgWidth="+imgWidth+"\n"+
+				  "imgHeight="+imgHeight+"\n"+
+				  "tilesX="+tilesX+"\n"+
+				  "tilesY="+tilesY+"\n"+
+				  "nChn="+nChn+"\n"+
+				  "step="+step+"\n"+
+				  "size="+size+"\n"+
+				  "kernelSize="+kernelSize+"\n"+
+				  "kernelWidth="+kernelWidth+"\n"+
+				  "kernelNumHor="+kernelNumHor+"\n"+
+				  "numberOfKernelsInChn="+numberOfKernelsInChn+"\n");
+		  
+		  if (updateStatus) IJ.showStatus("Convolving image with kernels, "+nChn+" channels, "+tilesY+" rows");
 		  final long startTime = System.nanoTime();
-		  for (int ithread = 0; ithread < threads.length; ithread++) {
-			  threads[ithread] = new Thread() {
-				  public void run() {
-					  float [] pixels=null;       // will be initialized at first use
-					  float [] kernelPixels=null; // will be initialized at first use
-					  double [] kernel=       new double[kernelSize*kernelSize];
-					  double [] inTile=       new double[kernelSize*kernelSize];
-					  double [] outTile=      new double[size * size];
-					  double [] doubleKernel= new double[size * size];
-					  int chn,tileY,tileX;
-					  int chn0=-1;
-//					  double debug_sum;
-//					  int i;
-					  DoubleFHT fht_instance =new DoubleFHT(); // provide DoubleFHT instance to save on initializations (or null)
-					  for (int nTile = ai.getAndIncrement(); nTile < numberOfKernels; nTile = ai.getAndIncrement()) {
-						  chn=nTile/numberOfKernelsInChn;
-						  tileY =(nTile % numberOfKernelsInChn)/tilesX;
-						  tileX = nTile % tilesX;
-						  if (tileX==0) {
-							  if (updateStatus) IJ.showStatus("Convolving image with kernels, channel "+(chn+1)+" of "+nChn+", row "+(tileY+1)+" of "+tilesY);
-							  if (globalDebugLevel>2) System.out.println("Processing kernels, channel "+(chn+1)+" of "+nChn+", row "+(tileY+1)+" of "+tilesY+" : "+IJ.d2s(0.000000001*(System.nanoTime()-startTime),3));
-						  }
-						  
-						  if (chn!=chn0) {
-							  pixels=      (float[]) imageStack.getPixels(chn+1);
-							  kernelPixels=(float[]) kernelStack.getPixels(chn+1);
-							  chn0=chn;
-						  }
-						  /* Read source image tile */
-						  extractSquareTile( pixels, // source pixel array,
-								  inTile, // will be filled, should have correct size before call
-								  slidingWindow, // window (same size as the kernel)
-								  imgWidth, // width of pixels array
-								  tileX*step, // left corner X
-								  tileY*step); // top corner Y
-						  /* zero pad twice the original size*/
-						  outTile=extendFFTInputTo (inTile, size);
-						  /* FHT transform of the source image data*/
-						  fht_instance.swapQuadrants(outTile);
-						  fht_instance.transform(    outTile);
-						  /* read convolution kernel */
-						  extractOneKernel(kernelPixels, //  array of combined square kernels, each 
-								  kernel, // will be filled, should have correct size before call
-								  kernelNumHor, // number of kernels in a row
-								  //tileX*kernelSize, // horizontal number of kernel to extract
-								  //tileY*kernelSize); // vertical number of kernel to extract
-								  tileX, // horizontal number of kernel to extract
-								  tileY); // vertical number of kernel to extract
-						  /* zero pad twice the original size*/
-						  doubleKernel=extendFFTInputTo (kernel, size);
-//						  debug_sum=0;
-//						  for (i=0;i<doubleKernel.length;i++) debug_sum+=doubleKernel[i];
-//						  if (globalDebugLevel>1) System.out.println("kernel sum="+debug_sum);
-						  
-						  //if ((tileY==tilesY/2) && (tileX==tilesX/2))  SDFA_INSTANCE.showArrays(doubleKernel,size,size, "doubleKernel-"+chn);
-						  /* FHT transform of the kernel */
-						  fht_instance.swapQuadrants(doubleKernel);
-						  fht_instance.transform(    doubleKernel);
-						  /* multiply in frequency domain */
-						  outTile=     fht_instance.multiply(outTile, doubleKernel, false);
-						  /* FHT inverse transform of the product - back to space domain */
-						  fht_instance.inverseTransform(outTile);
-						  fht_instance.swapQuadrants(outTile);
-						  /* accumulate result */
-						  //if ((tileY==tilesY/2) && (tileX==tilesX/2))  SDFA_INSTANCE.showArrays(outTile,size,size, "out-"+chn);
-						  /*This is synchronized method. It is possible to make threads to write to non-overlapping regions of the outPixels, but as the accumulation
-						   * takes just small fraction of severtal FHTs, it should be OK - reasonable number of threads will spread and not "stay in line"
-						   */
-						  accumulateSquareTile(outPixels[chn], //  float pixels array to accumulate tile
-								  outTile, // data to accumulate to the pixels array
-								  imgWidth, // width of pixels array
-								  (tileX-1)*step, // left corner X
-								  (tileY-1)*step); // top corner Y
-					  }
-				  }
-			  };
-		  }		      
-		  startAndJoin(threads);
-		  if (globalDebugLevel > 1) System.out.println("Threads done at "+IJ.d2s(0.000000001*(System.nanoTime()-startTime),3));
+		  for (li = 0; li < nextFirstFindex.length; li++){
+			  aStopIndex.set(nextFirstFindex[li]);
+			  if (li>0){
+				  ai.set(nextFirstFindex[li-1]);
+			  }
+//			  System.out.println("\n=== nextFirstFindex["+li+"] =" + nextFirstFindex[li]+" === ");
+			  for (int ithread = 0; ithread < threads.length; ithread++) {
+				  threads[ithread] = new Thread() {
+					  public void run() {
+						  float [] pixels=null;       // will be initialized at first use
+						  float [] kernelPixels=null; // will be initialized at first use
+						  double [] kernel=       new double[kernelSize*kernelSize];
+						  double [] inTile=       new double[kernelSize*kernelSize];
+						  double [] outTile=      new double[size * size];
+						  double [] doubleKernel= new double[size * size];
+						  int chn,tileY,tileX;
+						  int chn0=-1;
+						  //					  double debug_sum;
+						  //					  int i;
+						  DoubleFHT fht_instance =new DoubleFHT(); // provide DoubleFHT instance to save on initializations (or null)
+						  //					  for (int nTile0 = ai.getAndIncrement(); nTile0 < numberOfKernels; nTile0 = ai.getAndIncrement()) {
+						  for (int nTile0 = ai.getAndIncrement(); nTile0 < aStopIndex.get(); nTile0 = ai.getAndIncrement()) {
+							  //aStopIndex
+							  int nTile = nonOverlapSeq[nTile0];
+							  chn=nTile/numberOfKernelsInChn;
+							  tileY =(nTile % numberOfKernelsInChn)/tilesX;
+							  tileX = nTile % tilesX;
+							  if (tileX < 4) {
+	  							  int trow=(tileY+ ((tileY & 3) * tilesY))/4;
+								  if (updateStatus) IJ.showStatus("Convolving image with kernels, channel "+(chn+1)+" of "+nChn+", row "+(trow+1)+" of "+tilesY);
+								  if (globalDebugLevel>2) System.out.println("Processing kernels, channel "+(chn+1)+" of "+nChn+", row "+(trow+1)+" of "+tilesY+" : "+IJ.d2s(0.000000001*(System.nanoTime()-startTime),3));
+							  }
 
+							  if (chn!=chn0) {
+								  pixels=      (float[]) imageStack.getPixels(chn+1);
+								  kernelPixels=(float[]) kernelStack.getPixels(chn+1);
+								  chn0=chn;
+							  }
+							  /* Read source image tile */
+							  extractSquareTile( pixels, // source pixel array,
+									  inTile, // will be filled, should have correct size before call
+									  slidingWindow, // window (same size as the kernel)
+									  imgWidth, // width of pixels array
+									  tileX*step, // left corner X
+									  tileY*step); // top corner Y
+							  /* zero pad twice the original size*/
+							  outTile=extendFFTInputTo (inTile, size);
+							  /* FHT transform of the source image data*/
+							  fht_instance.swapQuadrants(outTile);
+							  fht_instance.transform(    outTile);
+							  /* read convolution kernel */
+							  extractOneKernel(kernelPixels, //  array of combined square kernels, each 
+									  kernel, // will be filled, should have correct size before call
+									  kernelNumHor, // number of kernels in a row
+									  //tileX*kernelSize, // horizontal number of kernel to extract
+									  //tileY*kernelSize); // vertical number of kernel to extract
+									  tileX, // horizontal number of kernel to extract
+									  tileY); // vertical number of kernel to extract
+							  /* zero pad twice the original size*/
+							  doubleKernel=extendFFTInputTo (kernel, size);
+							  //						  debug_sum=0;
+							  //						  for (i=0;i<doubleKernel.length;i++) debug_sum+=doubleKernel[i];
+							  //						  if (globalDebugLevel>1) System.out.println("kernel sum="+debug_sum);
+
+							  //if ((tileY==tilesY/2) && (tileX==tilesX/2))  SDFA_INSTANCE.showArrays(doubleKernel,size,size, "doubleKernel-"+chn);
+							  /* FHT transform of the kernel */
+							  fht_instance.swapQuadrants(doubleKernel);
+							  fht_instance.transform(    doubleKernel);
+							  /* multiply in frequency domain */
+							  outTile=     fht_instance.multiply(outTile, doubleKernel, false);
+							  /* FHT inverse transform of the product - back to space domain */
+							  fht_instance.inverseTransform(outTile);
+							  fht_instance.swapQuadrants(outTile);
+							  /* accumulate result */
+							  //if ((tileY==tilesY/2) && (tileX==tilesX/2))  SDFA_INSTANCE.showArrays(outTile,size,size, "out-"+chn);
+							  /*This is synchronized method. It is possible to make threads to write to non-overlapping regions of the outPixels, but as the accumulation
+							   * takes just small fraction of several FHTs, it should be OK - reasonable number of threads will spread and not "stay in line"
+							   */
+
+							  // Add smart synchronization - wait only if is too far ahead. First test - no synchronization at all
+
+							  //accumulateSquareTile(
+//							  System.out.print(tileY+":"+tileX+"/"+chn+"("+nTile0+"/"+nTile+") ");
+//							  if (tileX < 4)System.out.println();
+							  nonSyncAccumulateSquareTile(
+									  outPixels[chn], //  float pixels array to accumulate tile
+									  outTile, // data to accumulate to the pixels array
+									  imgWidth, // width of pixels array
+									  (tileX-1)*step, // left corner X
+									  (tileY-1)*step); // top corner Y
+							  final int numFinished=tilesFinishedAtomic.getAndIncrement();
+							  if (numFinished % (numberOfKernels/100+1) == 0) {
+								  SwingUtilities.invokeLater(new Runnable() {
+									  public void run() {
+										  IJ.showProgress(numFinished,numberOfKernels);
+									  }
+								  });
+							  }
+							  
+							  //numberOfKernels
+						  }
+					  }
+				  };
+			  }		      
+			  startAndJoin(threads);
+		  }
+		  if (updateStatus) IJ.showStatus("Convolution DONE");
+		  if (globalDebugLevel > 1) System.out.println("Threads done in "+IJ.d2s(0.000000001*(System.nanoTime()-startTime),3));
+		  IJ.showProgress(1.0);
 		  /* prepare result stack to return */
 		  ImageStack outStack=new ImageStack(imgWidth,imgHeight);
 		  for (i=0;i<nChn;i++) {
 			  outStack.addSlice(imageStack.getSliceLabel(i+1), outPixels[i]);
 		  }
+		  if (globalDebugLevel > 0) System.out.println("Convolution done in "+IJ.d2s(0.000000001*(System.nanoTime()-startTime),3));
 		  return outStack;
 	  }
 	  /* Adds zero pixels around the image, "extending canvas" */
@@ -1927,6 +2032,32 @@ public class EyesisCorrections {
 	   		  }
 	   	  }
 	     }
+
+	     void  nonSyncAccumulateSquareTile(
+		   		  float [] pixels, //  float pixels array to accumulate tile
+		   		  double []  tile, // data to accumulate to the pixels array
+		   		  int       width, // width of pixels array
+		   		  int          x0, // left corner X
+		   		  int          y0) { // top corner Y
+		   	  int length=tile.length;
+		   	  int size=(int) Math.sqrt(length);
+		   	  int i,j,x,y;
+		   	  int height=pixels.length/width;
+		   	  int index=0;
+		   	  for (i=0;i<size;i++) {
+		   		  y=y0+i;
+		   		  if ((y>=0) && (y<height)) {
+		   			  index=i*size;
+		   			  for (j=0;j<size;j++) {
+		   				  x=x0+j;
+		   				  if ((x>=0) && (x<width)) pixels[y*width+x]+=tile [index];
+		   				  index++;
+		   			  }
+		   		  }
+		   	  }
+		     }
+	     
+	     
 	     synchronized void  accumulateSquareTile(
 	   		  double [] pixels, //  float pixels array to accumulate tile
 	   		  double []  tile, // data to accumulate to the pixels array
@@ -1995,8 +2126,53 @@ public class EyesisCorrections {
 	      outStack.addSlice(chnNames[chn], outPixels[chn]);
 	    }
 	    return outStack;
-	}
+	  }
 
+	  // return 2-d double array instead of the stack
+	  public double [][]bayerToDoubleStack(ImagePlus imp, // source bayer image, linearized, 32-bit (float))
+			  EyesisCorrectionParameters.SplitParameters splitParameters){ // if null - no margins, no oversample
+		  if (imp==null) return null;
+		  boolean adv = splitParameters != null;
+		  int oversample = adv? splitParameters.oversample : 1;
+		  int addTop=      adv?splitParameters.addTop:       0;  
+		  int addLeft=     adv?splitParameters.addLeft:      0;  
+		  int addBottom=   adv?splitParameters.addBottom:    0;  
+		  int addRight=    adv?splitParameters.addRight:     0;  
+		  String [] chnNames={"Red","Blue","Green"}; //Different sequence than RGB!!
+		  int nChn=chnNames.length;
+		  ImageProcessor ip=imp.getProcessor();
+		  int inWidth=imp.getWidth();
+		  int inHeight=imp.getHeight();
+		  int outHeight=inHeight*oversample + addTop +  addBottom;
+		  int outWidth= inWidth* oversample + addLeft + addRight;
+		  int outLength=outWidth*outHeight;
+
+		  double [][] outPixels=new double[nChn][outLength];
+		  float [] pixels = (float[]) ip.getPixels();
+		  int chn,y,x,i,index;
+		  int bayerPeriod=2*oversample;
+		  int ovrWidth=   inWidth * oversample;
+		  int ovrHeight= inHeight *  oversample;
+		  for (chn=0;chn<nChn;chn++) for (i=0;i<outPixels[chn].length;i++) outPixels[chn][i]=0.0f;
+		  /* Can be optimized - now it calculate input address for all those 0-es */
+		  for (index=0; index<outLength; index++) {
+			  y=(index / outWidth) - addTop;
+			  x=(index % outWidth) - addLeft;
+			  if (y<0) y= (bayerPeriod-((-y) % bayerPeriod))%bayerPeriod;
+			  else if (y>=ovrHeight) y= ovrHeight-bayerPeriod +((y-ovrHeight) % bayerPeriod);
+			  if (x<0) x= (bayerPeriod-((-x) % bayerPeriod))%bayerPeriod;
+			  else  if (x>=ovrWidth) x= ovrWidth-bayerPeriod +((x-ovrWidth) % bayerPeriod);
+			  if (((y% oversample)==0) && ((x% oversample)==0)) {
+				  x/=oversample;
+				  y/=oversample;
+				  chn=((x&1)==(y&1))?2:(((x&1)!=0)?0:1);
+				  outPixels[chn][index]=pixels[y*inWidth+x];
+			  }
+		  }
+		  return outPixels;
+	  }
+	  
+	  
 	
 //double []  DENOISE_MASK=null; 	
 	
@@ -2144,26 +2320,28 @@ public class EyesisCorrections {
 	 	  return mask;
 	   }
 	   /* ======================================================================== */
-	   private void saveAndShow(
-	 		  ImagePlus             imp,
+//	   private void saveAndShow(
+	   public void saveAndShow(
+			   ImagePlus             imp,
 			   EyesisCorrectionParameters.CorrectionParameters  correctionsParameters){
-	 	  saveAndShowEnable( imp,    correctionsParameters , true, true);
+		   saveAndShowEnable( imp,    correctionsParameters , true, true);
 	   }
 
 	   private void saveAndShowEnable(
-	 		  ImagePlus             imp,
-	 		 EyesisCorrectionParameters.CorrectionParameters  correctionsParameters,
-	 		  boolean               enableSave,
-	 		  boolean               enableShow){
-	 	  saveAndShow(
-	 			  imp,
-	 			 correctionsParameters,
-	 			correctionsParameters.save && enableSave,
-	 			correctionsParameters.show && enableShow,
-	 			correctionsParameters.JPEG_quality);
+			   ImagePlus             imp,
+			   EyesisCorrectionParameters.CorrectionParameters  correctionsParameters,
+			   boolean               enableSave,
+			   boolean               enableShow){
+		   saveAndShow(
+				   imp,
+				   correctionsParameters,
+				   correctionsParameters.save && enableSave,
+				   correctionsParameters.show && enableShow,
+				   correctionsParameters.JPEG_quality);
 	   }
 
-	   private void saveAndShow(
+	   void saveAndShow(
+//	   public void saveAndShow(
 			   ImagePlus             imp,
 			   EyesisCorrectionParameters.CorrectionParameters  correctionsParameters,
 			   boolean               save,
@@ -2171,58 +2349,113 @@ public class EyesisCorrections {
 		   saveAndShow(imp, correctionsParameters,  save,  show, -1);
 	   } 
 	   
-	   private void saveAndShow(
-	 		  ImagePlus             imp,
-	 		 EyesisCorrectionParameters.CorrectionParameters  correctionsParameters,
-	 		  boolean               save,
-	 		  boolean               show,
-	 		  int                   jpegQuality){//  <0 - keep current, 0 - force Tiff, >0 use for JPEG
-		 	  String path=null;
-		 	  if (save)  path= correctionsParameters.selectResultsDirectory(
-		 		    				true,  // smart,
-		 		    				true);  //newAllowed, // save  
-		 	 
-		 	  if (path!=null) {
-		 		  path+=Prefs.getFileSeparator()+imp.getTitle();
-	 		  if (((imp.getStackSize()==1)) && (jpegQuality!=0) && ((imp.getFileInfo().fileType== FileInfo.RGB) || (jpegQuality>0))) {
-	 			  if (this.debugLevel>0) System.out.println("Saving result to "+path+".jpeg");
-	 			  FileSaver fs=new FileSaver(imp);
-	 			  if (jpegQuality>0) FileSaver.setJpegQuality(jpegQuality);
-	 			  fs.saveAsJpeg(path+".jpeg");
-	 		  }
-	 		  else {
-	 			  if (this.debugLevel>0) System.out.println("Saving result to "+path+".tiff");
-	 			  FileSaver fs=new FileSaver(imp);
-	 			  if (imp.getStackSize()>1)  fs.saveAsTiffStack(path+".tiff");
-	 			  else fs.saveAsTiff(path+".tiff");
-	 		  }
-	 	  }
-	 	  if (show) {
-	 		  imp.getProcessor().resetMinAndMax(); // probably not needed
-	 		  imp.show();
-	 	  }
-	   }
-/*	  
-	   private void saveAndShow(
-	 		  CompositeImage        compositeImage,
-	 		  EyesisCorrectionParameters.ProcessParameters     processParameters,
-			   EyesisCorrectionParameters.CorrectionParameters  correctionsParameters){
-	 	  saveAndShow(compositeImage,    processParameters, correctionsParameters , true, true);
+	   void saveAndShow(
+			   ImagePlus             imp,
+			   EyesisCorrectionParameters.CorrectionParameters  correctionsParameters,
+			   boolean               save,
+			   boolean               show,
+			   int                   jpegQuality){//  <0 - keep current, 0 - force Tiff, >0 use for JPEG
+		   String path=null;
+		   if (save) path= correctionsParameters.selectResultsDirectory(
+				   true,  // smart,
+				   true);  //newAllowed, // save
+		   
+		   saveAndShow(
+				   imp,
+				   path,
+				   correctionsParameters.png,
+				   show,
+				   jpegQuality);
 	   }
 
-	   private void saveAndShow(
-			   CompositeImage        compositeImage,
-			   EyesisCorrectionParameters.ProcessParameters     processParameters,
-			   EyesisCorrectionParameters.CorrectionParameters  correctionsParameters,
-			   boolean               enableSave,
-			   boolean               enableShow){
-		   saveAndShow(
-				   compositeImage,
-				   correctionsParameters,
-				   processParameters.save && enableSave,
-				   processParameters.show && enableShow);
+	   void saveAndShow(
+			   ImagePlus             imp,
+			   String                path,
+			   boolean               png,
+			   boolean               show,
+			   int                   jpegQuality){//  <0 - keep current, 0 - force Tiff, >0 use for JPEG
+		   if (path!=null) {
+			   path+=Prefs.getFileSeparator()+imp.getTitle();
+			   boolean hasAlphaHighByte = false;
+			   if ((imp.getStackSize()==1) && (imp.getFileInfo().fileType== FileInfo.RGB)) {
+				   int [] pixels = (int []) imp.getProcessor().getPixels();
+				   for (int i = 0; i < pixels.length; i++){
+					   if ((pixels[i] & 0xff000000) != 0){
+						   hasAlphaHighByte = true;
+						   break;
+					   }
+				   }
+			   }
+			   
+			   if (hasAlphaHighByte){
+				   if (png){
+					   if (this.debugLevel > 0) System.out.println("Saving RGBA result to "+path+".png");
+					   (new EyesisTiff()).savePNG_ARGB32(
+							   imp,
+							   path+".png"
+							   );
+
+				   } else {
+					   if (this.debugLevel > 0) System.out.println("Saving RGBA result to "+path+".tiff");
+					   try {
+						   (new EyesisTiff()).saveTiffARGB32(
+								   imp,
+								   path+".tiff",
+								   false, // correctionsParameters.imageJTags,	
+								   debugLevel);
+					   } catch (IOException e) {
+						   e.printStackTrace();
+					   } catch (FormatException e) {
+						   e.printStackTrace();
+					   } catch (ServiceException e) {
+						   e.printStackTrace();
+					   } catch (DependencyException e) {
+						   e.printStackTrace();
+					   }
+				   }
+				   
+			   } else if (((imp.getStackSize()==1)) && (jpegQuality!=0) && ((imp.getFileInfo().fileType== FileInfo.RGB) || (jpegQuality>0))) {
+				   if (this.debugLevel>0) System.out.println("Saving result to "+path+".jpeg");
+				   FileSaver fs=new FileSaver(imp);
+				   if (jpegQuality>0) FileSaver.setJpegQuality(jpegQuality);
+				   fs.saveAsJpeg(path+".jpeg");
+			   } else {
+				   if (this.debugLevel>0) System.out.println("Saving result to "+path+".tiff");
+				   FileSaver fs=new FileSaver(imp);
+				   // Save as RGBA if it is RGBA
+				   int bytesPerPixel = imp.getBytesPerPixel();
+				   int mode = 0;
+				   if (bytesPerPixel > 1) mode = 1;
+				   if (bytesPerPixel > 3) mode = 3;// float, mode 2 not supported
+
+				   if ((imp.getStackSize() == 4) && imp.getStack().getSliceLabel(4).equals("alpha")){
+					   try {
+						   (new EyesisTiff()).saveTiff(
+								   imp,
+								   path+".tiff",
+								   mode, //
+								   1.0, // full scale, absolute
+								   false, // correctionsParameters.imageJTags,	
+								   debugLevel);
+					   } catch (IOException e) {
+						   e.printStackTrace();
+					   } catch (FormatException e) {
+						   e.printStackTrace();
+					   } catch (ServiceException e) {
+						   e.printStackTrace();
+					   } catch (DependencyException e) {
+						   e.printStackTrace();
+					   }
+				   } else if (imp.getStackSize()>1)  fs.saveAsTiffStack(path+".tiff");
+				   else fs.saveAsTiff(path+".tiff");
+			   }
+		   }
+		   if (show) {
+			   imp.getProcessor().resetMinAndMax(); // probably not needed
+			   imp.show();
+		   }
 	   }
-*/
+	   
 	   private void saveAndShow(
 	 		  CompositeImage        compositeImage,
 	 		  EyesisCorrectionParameters.CorrectionParameters correctionsParameters,
