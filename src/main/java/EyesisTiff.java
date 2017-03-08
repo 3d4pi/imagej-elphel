@@ -331,6 +331,7 @@ public EyesisTiff(String codec){
         TiffSaver tiffSaver = new TiffSaver(path);
         tiffSaver.setWritingSequentially(true);
         tiffSaver.setLittleEndian(false);
+        tiffSaver.setCodecOptions(TiffCompression.valueOf(codec).getCompressionCodecOptions(ifd));
         tiffSaver.writeHeader(); 
 //        tiffSaver.writeIFD(ifd,0); //* SHould not write here, some fields are calculated during writeImage, that writes IFD too
         System.out.println("bytes.length="+bytes.length);
