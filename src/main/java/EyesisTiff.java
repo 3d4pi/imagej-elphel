@@ -72,7 +72,7 @@ public class EyesisTiff {
 
 
 	}
-	public EyesisTiff(codec){
+	public EyesisTiff(String codec){
 		//	Please initialize the log4j system properly
 		this.codec=codec;
 

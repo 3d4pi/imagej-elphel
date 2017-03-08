@@ -1123,7 +1123,7 @@ public class JP46_Reader_camera implements PlugIn, ActionListener {
 		int [] FLIPH= new int[3];
 		int [] HEIGHTS=new int[3];
 		int [] BLANKS= new int[2];
-		Object timestamp=null;
+//		Object timestamp=null;
 		if (imp.getProperty("FLIPV")!=null) FLIPGV= Integer.valueOf((String) imp.getProperty("FLIPV")).intValue(); else return null;
 		if (imp.getProperty("FLIPH")!=null) FLIPGH= Integer.valueOf((String) imp.getProperty("FLIPH")).intValue(); else return null;
 		int i;
@@ -1135,8 +1135,10 @@ public class JP46_Reader_camera implements PlugIn, ActionListener {
 		for (i=1;i<=2;i++) {
 			if (imp.getProperty("BLANK_ROWS"+i)!=null) BLANKS[i-1]= Integer.valueOf((String) imp.getProperty("BLANK_ROWS"+i)).intValue(); else return null;
 		}
+		/*
 		timestamp=imp.getProperty("timestamp");
 		if (timestamp!=null);
+		*/
 		
 /*		
 		System.out.println("FLIPV="+FLIPGV+" FLIPH="+FLIPGH);

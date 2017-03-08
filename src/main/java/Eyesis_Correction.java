@@ -508,7 +508,7 @@ private Panel panel1,
 			addButton("Reset DCT kernels",         panelDct1, color_stop);
 			addButton("Setup DCT parameters",      panelDct1, color_configure);
 			addButton("DCT process files",         panelDct1, color_process);
-			add(panelDct1);
+			plugInFrame.add(panelDct1);
 		}
 		if (DCT_MODE) {
 			panelClt1 = new Panel();
@@ -532,7 +532,7 @@ private Panel panel1,
 			addButton("CLT reset 3D",              panelClt1, color_stop);
 			addButton("CLT 3D",                    panelClt1, color_conf_process);
 						
-			add(panelClt1);
+			plugInFrame.add(panelClt1);
 		}
 		plugInFrame.pack();
 
